@@ -3,7 +3,7 @@ import { createSong, updateSong, type SongValues } from './lib/song'
 import { loadData, saveData, type AppData } from './lib/storage'
 import { SongsPage } from './pages/SongsPage'
 import { VoicePage } from './pages/VoicePage'
-import type { Song, VoiceProfile } from './types'
+import type { AlignMode, Song, VoiceProfile } from './types'
 
 type Tab = 'voice' | 'songs'
 
@@ -22,6 +22,8 @@ function App() {
 
   const editSong = (song: Song, values: SongValues) =>
     save({ ...data, songs: data.songs.map((s) => (s.id === song.id ? updateSong(s, values) : s)) })
+
+  const changeAlignMode = (alignMode: AlignMode) => save({ ...data, settings: { ...data.settings, alignMode } })
 
   const deleteSong = (song: Song) => save({ ...data, songs: data.songs.filter((s) => s.id !== song.id) })
 
@@ -49,6 +51,7 @@ function App() {
             onAdd={addSong}
             onUpdate={editSong}
             onDelete={deleteSong}
+            onChangeAlignMode={changeAlignMode}
             onGoToVoice={() => setTab('voice')}
           />
         )}

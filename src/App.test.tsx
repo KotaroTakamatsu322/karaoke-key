@@ -133,3 +133,57 @@ describe('曲の登録・一覧（③）', () => {
     expect(screen.getByRole('heading', { name: '自分の音域' })).toBeTruthy()
   })
 })
+
+describe('判定ラベルと音域の図（④）', () => {
+  function song(id: string, low: number, high: number) {
+    return { id, title: id, artist: '', low, high, createdAt: id, updatedAt: id }
+  }
+
+  function statusOf(title: string) {
+    return within(screen.getByRole('listitem', { name: title })).getByTestId('status').textContent
+  }
+
+  beforeEach(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        profile: { low: 43, high: 67 },
+        songs: [song('曲1', 48, 71), song('曲2', 48, 64), song('曲3', 55, 76), song('曲4', 41, 72), song('曲5', 50, 70)],
+      }),
+    )
+  })
+
+  it('判定ラベルと歌い方の説明が出る', () => {
+    render(<App />)
+    expect(statusOf('曲1')).toBe('キー調整で歌える')
+    expect(statusOf('曲2')).toBe('原曲キーで歌える')
+    expect(statusOf('曲3')).toBe('オクターブ下推奨')
+    expect(statusOf('曲4')).toBe('音域が足りない')
+
+    const item3 = within(screen.getByRole('listitem', { name: '曲3' }))
+    expect(item3.getByText('1オクターブ下で歌い、キーは +3')).toBeTruthy()
+  })
+
+  it('音域の図で、自分・原曲・調整後の音域と出せない低音を表示する', () => {
+    render(<App />)
+    const item4 = within(screen.getByRole('listitem', { name: '曲4' }))
+    expect(item4.getByText('lowG 〜 mid2G')).toBeTruthy() // 自分
+    expect(item4.getByText('lowF 〜 hiC')).toBeTruthy() // 原曲
+    expect(item4.getByText(/低い音が 7半音 出ない/)).toBeTruthy()
+  })
+
+  it('合わせ方を切り替えると、おすすめキーが変わり、保存される', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    const keyOf5 = () => within(screen.getByRole('listitem', { name: '曲5' })).getByTestId('recommended-key').textContent
+
+    expect(keyOf5()).toBe('キー -3')
+    await user.click(screen.getByLabelText('真ん中に合わせる'))
+    expect(keyOf5()).toBe('キー -5')
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).settings).toEqual({ alignMode: 'center' })
+
+    cleanup()
+    render(<App />)
+    expect(keyOf5()).toBe('キー -5')
+  })
+})

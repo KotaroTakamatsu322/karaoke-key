@@ -294,3 +294,220 @@ button.danger {
   justify-content: flex-end;
   gap: 6px;
 }
+
+/* ④ 判定ラベルと音域の図 */
+:root {
+  --st-original: #2e7d32;
+  --st-original-bg: #e8f5e9;
+  --st-adjusted: #1565c0;
+  --st-adjusted-bg: #e3f0fd;
+  --st-octave: #b45309;
+  --st-octave-bg: #fdf0dc;
+  --st-wide: #c62828;
+  --st-wide-bg: #fdecec;
+  --bar-voice: #5b3fd6;
+  --bar-voice-limit: #cfc6f5;
+  --bar-original: #9e9eab;
+  --bar-shifted: #1e88e5;
+  --bar-missing: #e53935;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --st-original: #81c784;
+    --st-original-bg: #1d3320;
+    --st-adjusted: #90caf9;
+    --st-adjusted-bg: #172a3f;
+    --st-octave: #ffb74d;
+    --st-octave-bg: #3a2a14;
+    --st-wide: #ff8a80;
+    --st-wide-bg: #3a1f1f;
+    --bar-voice: #9c87ff;
+    --bar-voice-limit: #3f3666;
+    --bar-original: #6c6c78;
+    --bar-shifted: #64b5f6;
+    --bar-missing: #ff6f61;
+  }
+}
+
+.song {
+  display: block;
+}
+
+.song-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.song-actions {
+  flex: 0 0 auto;
+}
+
+.song-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 6px;
+}
+
+.song-key {
+  align-self: auto;
+  text-align: left;
+  font-size: 1.05rem;
+}
+
+.status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.status-original {
+  color: var(--st-original);
+  background: var(--st-original-bg);
+}
+
+.status-adjusted {
+  color: var(--st-adjusted);
+  background: var(--st-adjusted-bg);
+}
+
+.status-octaveDown,
+.status-octaveUp {
+  color: var(--st-octave);
+  background: var(--st-octave-bg);
+}
+
+.status-tooWide {
+  color: var(--st-wide);
+  background: var(--st-wide-bg);
+}
+
+.song-detail {
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.song-detail summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.range-bar {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.range-row {
+  display: grid;
+  grid-template-columns: 3.5em 1fr;
+  align-items: center;
+  column-gap: 8px;
+}
+
+.range-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.range-track {
+  position: relative;
+  isolation: isolate; /* 点線の z-index を横棒の中だけで効かせ、固定ヘッダーより前に出ないようにする */
+  height: 12px;
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.range-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 6px;
+  min-width: 2px;
+}
+
+.range-fill.voice-limit {
+  background: var(--bar-voice-limit);
+}
+
+.range-fill.voice {
+  background: var(--bar-voice);
+}
+
+.range-fill.original {
+  background: var(--bar-original);
+}
+
+.range-fill.shifted {
+  background: var(--bar-shifted);
+}
+
+.range-fill.missing {
+  background: var(--bar-missing);
+  border-radius: 6px 0 0 6px;
+}
+
+.range-guide {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  border-left: 1px dashed var(--muted);
+  z-index: 1;
+}
+
+.range-text {
+  grid-column: 2;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.range-missing {
+  color: var(--st-wide);
+}
+
+.align-mode {
+  padding: 8px 12px 10px;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 3px;
+  margin-top: 4px;
+}
+
+.segmented label {
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.segmented label.checked {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.segmented input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segmented label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+}

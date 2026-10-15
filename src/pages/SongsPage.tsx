@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AlignModeSwitch } from '../components/AlignModeSwitch'
 import { SongForm } from '../components/SongForm'
 import { SongList } from '../components/SongList'
 import type { SongValues } from '../lib/song'
@@ -11,11 +12,21 @@ type Props = {
   onAdd: (values: SongValues) => void
   onUpdate: (song: Song, values: SongValues) => void
   onDelete: (song: Song) => void
+  onChangeAlignMode: (mode: AlignMode) => void
   onGoToVoice: () => void
 }
 
 /** 曲の一覧と登録 */
-export function SongsPage({ songs, profile, alignMode, onAdd, onUpdate, onDelete, onGoToVoice }: Props) {
+export function SongsPage({
+  songs,
+  profile,
+  alignMode,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onChangeAlignMode,
+  onGoToVoice,
+}: Props) {
   const [editing, setEditing] = useState<Song | null>(null)
 
   const handleDelete = (song: Song) => {
@@ -50,6 +61,8 @@ export function SongsPage({ songs, profile, alignMode, onAdd, onUpdate, onDelete
       ) : (
         <SongForm onSubmit={onAdd} />
       )}
+
+      {profile && songs.length > 0 && <AlignModeSwitch value={alignMode} onChange={onChangeAlignMode} />}
 
       <SongList
         songs={songs}

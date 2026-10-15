@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import type { KeyResult, Song } from '../types'
 import { calcKey } from './key'
-import { createSong, filterSongs, formatKeyResult, sortSongs, updateSong, validateSong } from './song'
+import {
+  createSong,
+  describeKeyResult,
+  filterSongs,
+  formatKeyResult,
+  sortSongs,
+  STATUS_LABELS,
+  updateSong,
+  validateSong,
+} from './song'
 
 function song(title: string, artist: string, createdAt: string): Song {
   return { id: title, title, artist, low: 48, high: 64, createdAt, updatedAt: createdAt }
@@ -101,5 +110,23 @@ describe('formatKeyResult', () => {
     }
     expect(formatKeyResult(r)).toBe('1オクターブ上・キー ±0')
     expect(formatKeyResult({ ...r, shift: 3, machineKey: 3, octave: 0, status: 'adjusted' })).toBe('キー +3')
+  })
+})
+
+describe('判定ラベルと説明（④）', () => {
+  const me = { low: 43, high: 67 }
+  const label = (low: number, high: number) => STATUS_LABELS[calcKey(me, { low, high }, 'high').status]
+  const describe_ = (low: number, high: number) => describeKeyResult(calcKey(me, { low, high }, 'high'))
+
+  it('手順書 7章の表の曲', () => {
+    expect(label(48, 71)).toBe('キー調整で歌える')
+    expect(label(48, 64)).toBe('原曲キーで歌える')
+    expect(label(55, 76)).toBe('オクターブ下推奨')
+    expect(label(41, 72)).toBe('音域が足りない')
+
+    expect(describe_(48, 71)).toBe('キーを -4 にすると歌えます')
+    expect(describe_(48, 64)).toBe('原曲キーのまま歌えます')
+    expect(describe_(55, 76)).toBe('1オクターブ下で歌い、キーは +3')
+    expect(describe_(41, 72)).toBe('高い音に合わせるとキー -5。低い音が 7半音 出ません')
   })
 })

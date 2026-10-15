@@ -1,5 +1,5 @@
 // 曲の入力チェック・検索・並べ替え・おすすめキーの表示
-import type { KeyResult, Song } from '../types'
+import type { KeyResult, KeyStatus, Song } from '../types'
 
 export type SongDraft = {
   title: string
@@ -82,11 +82,35 @@ export function sortSongs(songs: Song[], order: SongOrder): Song[] {
   return sorted
 }
 
+function signed(n: number): string {
+  return n === 0 ? '±0' : `${n > 0 ? '+' : ''}${n}`
+}
+
 /** おすすめキーの表示（例: 「キー -4」「1オクターブ下・キー +3」「原曲キー」） */
 export function formatKeyResult(r: KeyResult): string {
-  const key = r.machineKey === 0 ? 'キー ±0' : `キー ${r.machineKey > 0 ? '+' : ''}${r.machineKey}`
+  const key = `キー ${signed(r.machineKey)}`
   if (r.octave === -1) return `1オクターブ下・${key}`
   if (r.octave === 1) return `1オクターブ上・${key}`
   if (r.shift === 0) return '原曲キー'
   return key
+}
+
+/** 判定ラベル */
+export const STATUS_LABELS: Record<KeyStatus, string> = {
+  original: '原曲キーで歌える',
+  adjusted: 'キー調整で歌える',
+  octaveDown: 'オクターブ下推奨',
+  octaveUp: 'オクターブ上推奨',
+  tooWide: '音域が足りない',
+}
+
+/** 歌い方の説明（例: 「1オクターブ下で歌い、キーは +3」） */
+export function describeKeyResult(r: KeyResult): string {
+  if (r.status === 'tooWide') {
+    return `高い音に合わせると${formatKeyResult(r)}。低い音が ${r.missingLow}半音 出ません`
+  }
+  if (r.octave === -1) return `1オクターブ下で歌い、キーは ${signed(r.machineKey)}`
+  if (r.octave === 1) return `1オクターブ上で歌い、キーは ${signed(r.machineKey)}`
+  if (r.shift === 0) return '原曲キーのまま歌えます'
+  return `キーを ${signed(r.machineKey)} にすると歌えます`
 }

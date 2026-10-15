@@ -1,8 +1,17 @@
 import { useState } from 'react'
 import { calcKey } from '../lib/key'
 import { formatNote } from '../lib/note'
-import { filterSongs, formatKeyResult, SONG_ORDERS, sortSongs, type SongOrder } from '../lib/song'
+import {
+  describeKeyResult,
+  filterSongs,
+  formatKeyResult,
+  SONG_ORDERS,
+  sortSongs,
+  STATUS_LABELS,
+  type SongOrder,
+} from '../lib/song'
 import type { AlignMode, Song, VoiceProfile } from '../types'
+import { RangeBar } from './RangeBar'
 
 type Props = {
   songs: Song[]
@@ -51,30 +60,48 @@ export function SongList({ songs, profile, alignMode, onEdit, onDelete }: Props)
       {shown.length === 0 && <p className="hint">「{query}」に当てはまる曲はありません。</p>}
 
       <ul className="song-list">
-        {shown.map((song) => (
-          <li key={song.id} className="song" aria-label={song.title}>
-            <div className="song-main">
-              <div className="song-title">{song.title}</div>
-              {song.artist && <div className="song-artist">{song.artist}</div>}
-              <div className="song-range">
-                {formatNote(song.low)} 〜 {formatNote(song.high)}
+        {shown.map((song) => {
+          const result = profile && calcKey(profile, song, alignMode)
+          return (
+            <li key={song.id} className="song" aria-label={song.title}>
+              <div className="song-head">
+                <div className="song-main">
+                  <div className="song-title">{song.title}</div>
+                  {song.artist && <div className="song-artist">{song.artist}</div>}
+                </div>
+                <div className="song-actions">
+                  <button type="button" className="small" onClick={() => onEdit(song)}>
+                    編集
+                  </button>
+                  <button type="button" className="small danger" onClick={() => onDelete(song)}>
+                    削除
+                  </button>
+                </div>
               </div>
-            </div>
-            {profile && (
-              <div className="song-key" data-testid="recommended-key">
-                {formatKeyResult(calcKey(profile, song, alignMode))}
-              </div>
-            )}
-            <div className="song-actions">
-              <button type="button" className="small" onClick={() => onEdit(song)}>
-                編集
-              </button>
-              <button type="button" className="small danger" onClick={() => onDelete(song)}>
-                削除
-              </button>
-            </div>
-          </li>
-        ))}
+
+              {result ? (
+                <>
+                  <div className="song-result">
+                    <span className={`status status-${result.status}`} data-testid="status">
+                      {STATUS_LABELS[result.status]}
+                    </span>
+                    <span className="song-key" data-testid="recommended-key">
+                      {formatKeyResult(result)}
+                    </span>
+                  </div>
+                  <details className="song-detail">
+                    <summary>{describeKeyResult(result)}</summary>
+                    <RangeBar profile={profile} song={song} result={result} />
+                  </details>
+                </>
+              ) : (
+                <div className="song-range">
+                  {formatNote(song.low)} 〜 {formatNote(song.high)}
+                </div>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
