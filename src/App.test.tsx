@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { STORAGE_KEY } from './lib/storage'
 
 beforeEach(() => localStorage.clear())
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 describe('自分の音域の登録（②）', () => {
   it('入力 → 再読み込み → 値が残っている', async () => {
@@ -48,5 +51,85 @@ describe('自分の音域の登録（②）', () => {
 
     expect(screen.getByRole('alert').textContent).toContain('最低音は最高音より低くしてください')
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+  })
+})
+
+describe('曲の登録・一覧（③）', () => {
+  type User = ReturnType<typeof userEvent.setup>
+
+  async function addSong(user: User, title: string, artist: string, low: number, high: number) {
+    await user.type(screen.getByLabelText('曲名'), title)
+    await user.type(screen.getByLabelText('アーティスト'), artist)
+    await user.selectOptions(screen.getByLabelText('最低音'), String(low))
+    await user.selectOptions(screen.getByLabelText('最高音'), String(high))
+    await user.click(screen.getByRole('button', { name: '登録する' }))
+  }
+
+  function keyOf(title: string) {
+    return within(screen.getByRole('listitem', { name: title })).getByTestId('recommended-key').textContent
+  }
+
+  beforeEach(() => {
+    // 自分の音域 lowG(43)〜mid2G(67)（手順書 7章）
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile: { low: 43, high: 67 } }))
+  })
+
+  it('3曲登録すると、それぞれ正しいおすすめキーが出て、再読み込みしても残る', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await addSong(user, '曲1', '歌手A', 48, 71)
+    await addSong(user, '曲2', '歌手B', 48, 64)
+    await addSong(user, '曲3', '歌手C', 55, 76)
+
+    expect(keyOf('曲1')).toBe('キー -4')
+    expect(keyOf('曲2')).toBe('原曲キー')
+    expect(keyOf('曲3')).toBe('1オクターブ下・キー +3')
+
+    cleanup()
+    render(<App />)
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(keyOf('曲1')).toBe('キー -4')
+  })
+
+  it('編集・削除・検索ができる', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    render(<App />)
+
+    await addSong(user, '曲1', '歌手A', 48, 71)
+    await addSong(user, '曲2', '歌手B', 48, 64)
+
+    // 編集: 最高音を hiB(71) → hiA#(70) にすると -3 になる
+    await user.click(within(screen.getByRole('listitem', { name: '曲1' })).getByRole('button', { name: '編集' }))
+    expect((screen.getByLabelText('曲名') as HTMLInputElement).value).toBe('曲1')
+    await user.selectOptions(screen.getByLabelText('最高音'), '70')
+    await user.click(screen.getByRole('button', { name: '変更を保存' }))
+    expect(keyOf('曲1')).toBe('キー -3')
+
+    // 検索
+    await user.type(screen.getByLabelText('曲名・アーティストで検索'), '歌手B')
+    expect(screen.getAllByRole('listitem').map((li) => li.getAttribute('aria-label'))).toEqual(['曲2'])
+    await user.clear(screen.getByLabelText('曲名・アーティストで検索'))
+
+    // 削除
+    await user.click(within(screen.getByRole('listitem', { name: '曲2' })).getByRole('button', { name: '削除' }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(1)
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).songs).toHaveLength(1)
+  })
+
+  it('音域が未登録なら、登録を促すメッセージを出す', async () => {
+    localStorage.clear()
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: '曲' }))
+
+    expect(screen.getByText(/自分の音域が登録されていないため/)).toBeTruthy()
+    await addSong(user, '曲1', '歌手A', 48, 71)
+    expect(screen.queryByTestId('recommended-key')).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: '音域を登録する' }))
+    expect(screen.getByRole('heading', { name: '自分の音域' })).toBeTruthy()
   })
 })
