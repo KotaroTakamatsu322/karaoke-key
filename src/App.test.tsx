@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { toFrequency } from './lib/note'
 import { STORAGE_KEY } from './lib/storage'
 
 beforeEach(() => localStorage.clear())
@@ -358,27 +359,63 @@ describe('CSV の取り込み（⑥）', () => {
 })
 
 describe('試聴（⑤）', () => {
+  // audio.ts は最初に作った AudioContext を使い回すので、このグループでは同じ偽物を使い続ける
+  // 鳴らした「のどの音」（sawtooth）の周波数だけを記録する（ビブラート用の sine は除く）
+  const frequencies: number[] = []
+  const param = () => ({ value: 0, setValueAtTime: () => {}, linearRampToValueAtTime: () => {} })
+  const node = () => {
+    const n = {
+      type: '',
+      frequency: param(),
+      Q: param(),
+      gain: param(),
+      connect: (next: unknown) => next,
+      start: () => n.type === 'sawtooth' && frequencies.push(n.frequency.value),
+      stop: () => {},
+    }
+    return n
+  }
+  class FakeAudioContext {
+    state = 'running'
+    currentTime = 0
+    destination = {}
+    createOscillator = node
+    createGain = node
+    createBiquadFilter = node
+  }
+
+  beforeEach(() => {
+    frequencies.length = 0
+    vi.stubGlobal('AudioContext', FakeAudioContext)
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
   it('音を選ぶと ▶ が押せるようになり、押すと Web Audio で鳴らす', async () => {
-    const start = vi.fn()
-    const node = () => ({ connect: (next: unknown) => next ?? node(), start, stop: vi.fn(), frequency: {}, gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() } })
-    vi.stubGlobal(
-      'AudioContext',
-      class {
-        state = 'running'
-        currentTime = 0
-        destination = {}
-        createOscillator = node
-        createGain = node
-      },
-    )
     const user = userEvent.setup()
     render(<App />)
 
     expect(screen.getAllByRole('button', { name: '音を鳴らす' })[0]).toHaveProperty('disabled', true)
     await user.selectOptions(screen.getByLabelText('最高音'), '67')
     await user.click(screen.getByRole('button', { name: 'mid2Gを鳴らす' }))
-    expect(start).toHaveBeenCalledTimes(1)
-    vi.unstubAllGlobals()
+    expect(frequencies).toEqual([toFrequency(67)])
+  })
+
+  it('キーの行の ▶ で、そのキーで歌ったときの最高音を鳴らす（⑦）', async () => {
+    // 自分 lowG(43)〜mid2G(67)。曲5 mid1D(50)〜hiA#(70) は 高め -3・低め -5
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        profile: { low: 43, high: 67 },
+        songs: [{ id: '曲5', title: '曲5', artist: '', low: 50, high: 70, createdAt: '1', updatedAt: '1' }],
+      }),
+    )
+    const user = userEvent.setup()
+    render(<App />)
+
+    const item = within(screen.getByRole('listitem', { name: '曲5' }))
+    await user.click(item.getByRole('button', { name: 'キー -3 の最高音 mid2G を鳴らす' }))
+    await user.click(item.getByRole('button', { name: 'キー -5 の最高音 mid2F を鳴らす' }))
+    expect(frequencies).toEqual([toFrequency(67), toFrequency(65)])
   })
 })
 

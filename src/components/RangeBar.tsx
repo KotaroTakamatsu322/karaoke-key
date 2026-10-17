@@ -1,11 +1,6 @@
-import { MAX_NOTE, MIN_NOTE, toInternational, toJapanese } from '../lib/note'
+import { noteName } from '../lib/note'
 import type { VoiceProfile } from '../types'
 import type { KeyOption } from './SongList'
-
-// ずらした後の音は日本式の表記の範囲（lowlowA〜hihiG#）を出ることがある
-function noteName(midi: number): string {
-  return midi >= MIN_NOTE && midi <= MAX_NOTE ? toJapanese(midi) : toInternational(midi)
-}
 
 type Props = {
   profile: VoiceProfile

@@ -38,6 +38,11 @@ export function toInternational(midi: number): string {
   return NAMES_FROM_C[midi % 12] + (Math.floor(midi / 12) - 1)
 }
 
+/** 短い表示用。キーをずらした後の音は日本式の表記の範囲（lowlowA〜hihiG#）を出ることがあるので、そのときは国際表記にする */
+export function noteName(midi: number): string {
+  return midi >= MIN_NOTE && midi <= MAX_NOTE ? toJapanese(midi) : toInternational(midi)
+}
+
 /** 画面表示用（例: mid2G（G4）） */
 export function formatNote(midi: number): string {
   return `${toJapanese(midi)}（${toInternational(midi)}）`
