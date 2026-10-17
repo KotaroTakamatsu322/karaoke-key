@@ -1,5 +1,6 @@
 // 曲の入力チェック・検索・並べ替え・おすすめキーの表示
 import type { KeyResult, KeyStatus, Song } from '../types'
+import { JOYSOUND_KEY_LIMIT, toMachineKey } from './key'
 
 export type SongDraft = {
   title: string
@@ -93,6 +94,13 @@ export function formatKeyResult(r: KeyResult): string {
   if (r.octave === 1) return `1オクターブ上・${key}`
   if (r.shift === 0) return '原曲キー'
   return key
+}
+
+/** JOYSOUND（キー幅 ±6）で設定が変わるとき（ずらし幅が ±7 のとき）だけ、その表示を返す */
+export function formatJoysoundKey(r: KeyResult): string | null {
+  const j = toMachineKey(r.shift, JOYSOUND_KEY_LIMIT)
+  if (j.octave === r.octave) return null
+  return formatKeyResult({ ...r, ...j })
 }
 
 /** 判定ラベル */

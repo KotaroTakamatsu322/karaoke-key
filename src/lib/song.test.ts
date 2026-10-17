@@ -5,6 +5,7 @@ import {
   createSong,
   describeKeyResult,
   filterSongs,
+  formatJoysoundKey,
   formatKeyResult,
   sortSongs,
   STATUS_LABELS,
@@ -110,6 +111,29 @@ describe('formatKeyResult', () => {
     }
     expect(formatKeyResult(r)).toBe('1オクターブ上・キー ±0')
     expect(formatKeyResult({ ...r, shift: 3, machineKey: 3, octave: 0, status: 'adjusted' })).toBe('キー +3')
+  })
+})
+
+describe('formatJoysoundKey（JOYSOUND はキー幅 ±6）', () => {
+  const me = { low: 43, high: 67 }
+  const joy = (low: number, high: number) => formatJoysoundKey(calcKey(me, { low, high }, 'high'))
+
+  it('ずらし幅 -7 なら、JOYSOUND では 1オクターブ下・キー +5', () => {
+    const r = calcKey(me, { low: 50, high: 74 }, 'high')
+    expect(formatKeyResult(r)).toBe('キー -7')
+    expect(formatJoysoundKey(r)).toBe('1オクターブ下・キー +5')
+  })
+
+  it('ずらし幅 +7 なら、JOYSOUND では 1オクターブ上・キー -5', () => {
+    expect(formatJoysoundKey(calcKey({ low: 55, high: 79 }, { low: 48, high: 72 }, 'high'))).toBe(
+      '1オクターブ上・キー -5',
+    )
+  })
+
+  it('DAM と同じ設定になるときは出さない', () => {
+    expect(joy(50, 73)).toBeNull() // -6
+    expect(joy(52, 75)).toBeNull() // -8（どちらも 1オクターブ下・キー +4）
+    expect(joy(48, 64)).toBeNull() // 原曲キー
   })
 })
 

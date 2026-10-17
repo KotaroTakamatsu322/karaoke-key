@@ -4,6 +4,7 @@ import { formatNote } from '../lib/note'
 import {
   describeKeyResult,
   filterSongs,
+  formatJoysoundKey,
   formatKeyResult,
   SONG_ORDERS,
   sortSongs,
@@ -62,6 +63,7 @@ export function SongList({ songs, profile, alignMode, onEdit, onDelete }: Props)
       <ul className="song-list">
         {shown.map((song) => {
           const result = profile && calcKey(profile, song, alignMode)
+          const joysoundKey = result && formatJoysoundKey(result)
           return (
             <li key={song.id} className="song" aria-label={song.title}>
               <div className="song-head">
@@ -88,6 +90,11 @@ export function SongList({ songs, profile, alignMode, onEdit, onDelete }: Props)
                     <span className="song-key" data-testid="recommended-key">
                       {formatKeyResult(result)}
                     </span>
+                    {joysoundKey && (
+                      <span className="song-key-alt" data-testid="joysound-key">
+                        ±6: {joysoundKey}
+                      </span>
+                    )}
                   </div>
                   <details className="song-detail">
                     <summary>{describeKeyResult(result)}</summary>

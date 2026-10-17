@@ -359,6 +359,12 @@ button.danger {
   font-size: 1.05rem;
 }
 
+.song-key-alt {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 .status {
   font-size: 0.8rem;
   font-weight: 600;

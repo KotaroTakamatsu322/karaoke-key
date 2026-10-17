@@ -1,9 +1,21 @@
 // キー計算（実装手順書 3章）
 import type { AlignMode, KeyResult, KeyStatus, VoiceProfile } from '../types'
 
-export const MACHINE_KEY_LIMIT = 7 // DAM・JOYSOUND のキー幅 ±7
+export const MACHINE_KEY_LIMIT = 7 // DAM のキー幅 ±7
+export const JOYSOUND_KEY_LIMIT = 6 // JOYSOUND のキー幅 ±6
 
 type SongRange = { low: number; high: number }
+
+/** ずらし幅を、キー幅 ±limit のカラオケ機での設定値（オクターブとキー）に直す */
+export function toMachineKey(
+  shift: number,
+  limit = MACHINE_KEY_LIMIT,
+): Pick<KeyResult, 'octave' | 'machineKey'> {
+  let octave: KeyResult['octave'] = 0
+  if (shift < -limit) octave = -1
+  else if (shift > limit) octave = 1
+  return { octave, machineKey: shift - 12 * octave }
+}
 
 export function calcKey(profile: VoiceProfile, song: SongRange, alignMode: AlignMode): KeyResult {
   const uLow = profile.comfortableLow ?? profile.low
@@ -28,10 +40,7 @@ export function calcKey(profile: VoiceProfile, song: SongRange, alignMode: Align
   }
 
   // 5. カラオケ機での設定値に直す
-  let octave: KeyResult['octave'] = 0
-  if (shift < -MACHINE_KEY_LIMIT) octave = -1
-  else if (shift > MACHINE_KEY_LIMIT) octave = 1
-  const machineKey = shift - 12 * octave
+  const { octave, machineKey } = toMachineKey(shift)
 
   let status: KeyStatus
   if (tooWide) status = 'tooWide'
