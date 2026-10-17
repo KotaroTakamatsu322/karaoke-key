@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NoteSelect } from '../components/NoteSelect'
 import { VoiceChart } from '../components/VoiceChart'
+import { VoiceMeter } from '../components/VoiceMeter'
 import { formatNote } from '../lib/note'
 import { validateProfile, type ProfileDraft } from '../lib/profile'
 import type { VoiceProfile } from '../types'
@@ -52,6 +53,18 @@ export function VoicePage({ profile, onSave }: Props) {
 
       {/* 選んでいる途中の音域をそのまま図にする（入力に問題があるあいだは出さない） */}
       {preview.ok && <VoiceChart profile={preview.profile} />}
+
+      {/* 測った音は入力欄に入れるだけで、保存はユーザーが確かめてから「保存する」で行う */}
+      <VoiceMeter
+        onApplyRange={(low, high) => {
+          setDraft((d) => ({ ...d, low, high }))
+          setMessage('測った音を最低音・最高音に入れました。よければ「保存する」を押してください')
+        }}
+        onApplyFalsetto={(falsettoHigh) => {
+          setDraft((d) => ({ ...d, falsettoHigh }))
+          setMessage('測った最高音を裏声の最高音に入れました。よければ「保存する」を押してください')
+        }}
+      />
 
       <form onSubmit={handleSubmit} noValidate>
         <p className="hint">▶ を押すと、選んだ音が約1秒鳴ります（iPhone はマナーモードだと鳴らないことがあります）。</p>

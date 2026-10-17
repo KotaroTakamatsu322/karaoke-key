@@ -331,6 +331,82 @@ describe('歌った記録（⑤）', () => {
   })
 })
 
+describe('マイクで音域を測る（⑧）', () => {
+  // 偽のマイク: singing の高さののこぎり波（声に近い音）を返す。null なら無音
+  let singing: number | null = null
+  const stopTrack = vi.fn()
+  class FakeMicContext {
+    sampleRate = 48000
+    createAnalyser() {
+      return {
+        fftSize: 2048,
+        getFloatTimeDomainData(buf: Float32Array) {
+          const f = singing === null ? 0 : toFrequency(singing)
+          for (let i = 0; i < buf.length; i++) buf[i] = singing === null ? 0 : 0.5 * (2 * (((i * f) / 48000) % 1) - 1)
+        },
+      }
+    }
+    createMediaStreamSource() {
+      return { connect: () => {} }
+    }
+    close() {
+      return Promise.resolve()
+    }
+  }
+
+  afterEach(() => {
+    singing = null
+    vi.unstubAllGlobals()
+  })
+
+  it('のばした声の最低音・最高音を測り、確認してから入力欄に入れる', async () => {
+    vi.stubGlobal('AudioContext', FakeMicContext)
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      mediaDevices: { getUserMedia: () => Promise.resolve({ getTracks: () => [{ stop: stopTrack }] }) },
+    })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByText('マイクで測る'))
+    await user.click(screen.getByRole('button', { name: '測りはじめる' }))
+
+    singing = 48 // mid1C を 0.5秒以上のばす
+    expect(await screen.findByText('mid1C（C3）', { selector: '[data-testid="measured-low"]' }, { timeout: 3000 })).toBeTruthy()
+    singing = 67 // mid2G
+    expect(await screen.findByText('mid2G（G4）', { selector: '[data-testid="measured-high"]' }, { timeout: 3000 })).toBeTruthy()
+    expect(screen.getByTestId('measured-low').textContent).toBe('mid1C（C3）')
+
+    // 選べる音より高い D7 (98) は「範囲外」と出すだけで、数えない
+    singing = 98
+    expect(await screen.findByText('D7（範囲外）', {}, { timeout: 2000 })).toBeTruthy()
+    await new Promise((resolve) => setTimeout(resolve, 700))
+    expect(screen.getByTestId('measured-high').textContent).toBe('mid2G（G4）')
+
+    await user.click(screen.getByRole('button', { name: '止める' }))
+    expect(stopTrack).toHaveBeenCalled()
+
+    // 入力欄に入るだけで、保存はまだ
+    await user.click(screen.getByRole('button', { name: '出せる音域に入れる' }))
+    expect((screen.getByLabelText('最低音') as HTMLSelectElement).value).toBe('48')
+    expect((screen.getByLabelText('最高音') as HTMLSelectElement).value).toBe('67')
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: '最高音を裏声の欄に入れる' }))
+    expect((screen.getByLabelText('裏声の最高音') as HTMLSelectElement).value).toBe('67')
+  }, 15000)
+
+  it('マイクが使えないときは、そう伝える', async () => {
+    vi.stubGlobal('navigator', { ...navigator, mediaDevices: undefined })
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByText('マイクで測る'))
+    await user.click(screen.getByRole('button', { name: '測りはじめる' }))
+    expect(screen.getByRole('alert').textContent).toContain('マイクを使えません')
+  })
+})
+
 describe('印と絞り込み（⑦）', () => {
   beforeEach(() => {
     // 自分 lowG(43)〜mid2G(67)。曲A は原曲キーで歌える、曲B は高い
