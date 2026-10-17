@@ -11,6 +11,7 @@ import {
   formatJoysoundShift,
   formatKeyResult,
   formatShift,
+  searchSuggestions,
   sortSongs,
   STATUS_LABELS,
   updateSong,
@@ -150,6 +151,30 @@ describe('artistNames', () => {
       song('曲4', '', '4'),
     ]
     expect(artistNames(songs)).toEqual(['あいみょん', 'ケツメイシ'])
+  })
+})
+
+describe('searchSuggestions', () => {
+  it('アーティスト（五十音順）のあとに曲名（五十音順、アーティストを添える）を並べる', () => {
+    const songs = [
+      song('さくら', 'ケツメイシ', '1'),
+      song('マリーゴールド', 'あいみょん', '2'),
+      song('あいのうた', 'ケツメイシ', '3'),
+      song('アカペラ曲', '', '4'),
+    ]
+    expect(searchSuggestions(songs)).toEqual([
+      { value: 'あいみょん', label: 'アーティスト' },
+      { value: 'ケツメイシ', label: 'アーティスト' },
+      { value: 'あいのうた', label: '曲（ケツメイシ）' },
+      { value: 'アカペラ曲', label: '曲' },
+      { value: 'さくら', label: '曲（ケツメイシ）' },
+      { value: 'マリーゴールド', label: '曲（あいみょん）' },
+    ])
+  })
+
+  it('同じ曲名は1つにまとめる（アーティストは添えない）', () => {
+    const songs = [song('さくら', 'ケツメイシ', '1'), song('さくら', '森山直太朗', '2')]
+    expect(searchSuggestions(songs).filter((s) => s.value === 'さくら')).toEqual([{ value: 'さくら', label: '曲' }])
   })
 })
 

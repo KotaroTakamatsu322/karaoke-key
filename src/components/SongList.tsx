@@ -7,6 +7,7 @@ import {
   applySongFilters,
   describeKeyResult,
   filterSongs,
+  searchSuggestions,
   SONG_FILTERS,
   type SongFilter,
   formatJoysoundShift,
@@ -70,9 +71,16 @@ export function SongList({ songs, records, ...rest }: Props) {
           className="text-input"
           aria-label="曲名・アーティストで検索"
           placeholder="曲名・アーティストで検索"
+          list="song-search-history"
+          autoComplete="off"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <datalist id="song-search-history">
+          {searchSuggestions(songs).map((s) => (
+            <option key={`${s.label}:${s.value}`} value={s.value} label={s.label} />
+          ))}
+        </datalist>
         <select
           className="note-select"
           aria-label="並べ替え"

@@ -135,6 +135,19 @@ export function artistNames(songs: Song[]): string[] {
   return [...names].sort(collator.compare)
 }
 
+/** 検索欄の候補: 登録済みのアーティスト（五十音順）と曲名（五十音順）。曲名にはアーティストを添える */
+export function searchSuggestions(songs: Song[]): { value: string; label: string }[] {
+  const artists = artistNames(songs).map((a) => ({ value: a, label: 'アーティスト' }))
+  const titles = new Map<string, string>() // 曲名 → 添える文字（同じ曲名が2つ以上あれば、アーティストは書かない）
+  for (const s of songs) {
+    titles.set(s.title, titles.has(s.title) ? '曲' : s.artist ? `曲（${s.artist}）` : '曲')
+  }
+  const songItems = [...titles]
+    .sort(([a], [b]) => collator.compare(a, b))
+    .map(([value, label]) => ({ value, label }))
+  return [...artists, ...songItems]
+}
+
 function signed(n: number): string {
   return n === 0 ? '±0' : `${n > 0 ? '+' : ''}${n}`
 }
