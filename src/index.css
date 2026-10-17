@@ -221,6 +221,7 @@ fieldset .errors {
 }
 
 button.secondary,
+.file-button,
 button.small {
   font: inherit;
   border: 1px solid var(--border);
@@ -230,9 +231,49 @@ button.small {
   cursor: pointer;
 }
 
-button.secondary {
+button.secondary,
+.file-button {
   flex: 0 0 auto;
   padding: 12px 16px;
+}
+
+/* ファイルを選ぶ欄は見えなくし、ボタンの形をしたラベルを押して選ぶ */
+.file-button {
+  position: relative;
+}
+
+.file-button input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+}
+
+.file-button:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.song-csv {
+  margin-top: 24px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.song-csv summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.song-csv .errors {
+  margin: 12px 0 0;
 }
 
 button.small {

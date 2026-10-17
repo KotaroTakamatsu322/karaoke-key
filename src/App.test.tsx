@@ -330,6 +330,33 @@ describe('歌った記録（⑤）', () => {
   })
 })
 
+describe('CSV の取り込み（⑥）', () => {
+  it('ファイルを選ぶと曲が増え、同じ曲は上書きされ、読めない行が出る', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        profile: { low: 43, high: 67 },
+        songs: [{ id: 'id-1', title: '曲1', artist: '歌手A', low: 48, high: 71, createdAt: '1', updatedAt: '1' }],
+        records: [{ id: 'r1', songId: 'id-1', shift: -4, rating: 'good', date: '2026-10-17T00:00:00.000Z' }],
+      }),
+    )
+    const user = userEvent.setup()
+    render(<App />)
+
+    const csv = '曲名,アーティスト,最低音,最高音\n曲1,歌手A,mid1C,hiA#\n曲2,歌手B,C3,E4\n曲3,,mid1C,hiZ\n'
+    await user.upload(screen.getByLabelText('CSVファイルを選ぶ'), new File([csv], 'songs.csv', { type: 'text/csv' }))
+
+    expect((await screen.findByText('1曲を追加、1曲を上書きしました')).getAttribute('role')).toBe('status')
+    expect(screen.getByRole('alert').textContent).toBe('4行目: 最高音「hiZ」が読めません')
+
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)!)
+    expect(saved.songs.map((s: { title: string }) => s.title)).toEqual(['曲1', '曲2'])
+    expect(saved.songs[0]).toMatchObject({ id: 'id-1', high: 70 }) // 上書き（ID はそのまま）
+    expect(saved.records).toHaveLength(1) // 歌った記録は残る
+    expect(screen.getAllByRole('listitem', { name: /曲\d/ })).toHaveLength(2)
+  })
+})
+
 describe('試聴（⑤）', () => {
   it('音を選ぶと ▶ が押せるようになり、押すと Web Audio で鳴らす', async () => {
     const start = vi.fn()

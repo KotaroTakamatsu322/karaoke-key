@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { mergeSongs } from './lib/csv'
 import { createSong, updateSong, type SongValues } from './lib/song'
 import { loadData, saveData, type AppData } from './lib/storage'
 import { SongsPage } from './pages/SongsPage'
@@ -30,6 +31,12 @@ function App() {
       songs: data.songs.filter((s) => s.id !== song.id),
       records: data.records.filter((r) => r.songId !== song.id),
     })
+
+  const importSongs = (values: SongValues[]) => {
+    const { songs, added, updated } = mergeSongs(data.songs, values)
+    save({ ...data, songs })
+    return { added, updated }
+  }
 
   const addRecord = (record: SingRecord) => save({ ...data, records: [...data.records, record] })
 
@@ -64,6 +71,7 @@ function App() {
             onDelete={deleteSong}
             onAddRecord={addRecord}
             onDeleteRecord={deleteRecord}
+            onImport={importSongs}
             onGoToVoice={() => setTab('voice')}
           />
         )}

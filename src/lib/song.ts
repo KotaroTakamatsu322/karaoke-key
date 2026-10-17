@@ -49,7 +49,8 @@ export function createSong(values: SongValues, now = new Date()): Song {
 }
 
 export function updateSong(song: Song, values: SongValues, now = new Date()): Song {
-  return { ...song, ...values, updatedAt: now.toISOString() }
+  // 裏声の最高音は、値に入っていなければ消す（編集や CSV で消せるように）
+  return { ...song, ...values, falsettoHigh: values.falsettoHigh, updatedAt: now.toISOString() }
 }
 
 /** 曲名とアーティストで絞り込む（大文字・小文字、全角・半角は区別しない） */
@@ -59,7 +60,8 @@ export function filterSongs(songs: Song[], query: string): Song[] {
   return songs.filter((s) => normalize(s.title).includes(q) || normalize(s.artist).includes(q))
 }
 
-function normalize(text: string): string {
+/** 比べるための文字の形（全角・半角、大文字・小文字をそろえ、前後の空白を取る） */
+export function normalize(text: string): string {
   return text.normalize('NFKC').toLowerCase().trim()
 }
 

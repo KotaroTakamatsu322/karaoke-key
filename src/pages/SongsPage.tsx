@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { SongCsv } from '../components/SongCsv'
 import { SongForm } from '../components/SongForm'
 import { SongList } from '../components/SongList'
 import { artistNames, type SongValues } from '../lib/song'
@@ -13,6 +14,7 @@ type Props = {
   onDelete: (song: Song) => void
   onAddRecord: (record: SingRecord) => void
   onDeleteRecord: (record: SingRecord) => void
+  onImport: (values: SongValues[]) => { added: number; updated: number }
   onGoToVoice: () => void
 }
 
@@ -26,6 +28,7 @@ export function SongsPage({
   onDelete,
   onAddRecord,
   onDeleteRecord,
+  onImport,
   onGoToVoice,
 }: Props) {
   const [editing, setEditing] = useState<Song | null>(null)
@@ -77,6 +80,8 @@ export function SongsPage({
         }}
         onDelete={handleDelete}
       />
+
+      <SongCsv songs={songs} onImport={onImport} />
     </section>
   )
 }
