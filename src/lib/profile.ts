@@ -6,6 +6,7 @@ export type ProfileDraft = {
   high?: number
   comfortableLow?: number
   comfortableHigh?: number
+  falsettoHigh?: number
 }
 
 /** 入力に問題がなければ VoiceProfile を、あればエラーメッセージの一覧を返す */
@@ -41,5 +42,6 @@ export function validateProfile(
   const profile: VoiceProfile = { low: d.low, high: d.high }
   if (d.comfortableLow !== undefined) profile.comfortableLow = d.comfortableLow
   if (d.comfortableHigh !== undefined) profile.comfortableHigh = d.comfortableHigh
+  if (d.falsettoHigh !== undefined) profile.falsettoHigh = d.falsettoHigh
   return { ok: true, profile }
 }

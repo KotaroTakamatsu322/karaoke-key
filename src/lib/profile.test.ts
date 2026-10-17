@@ -31,6 +31,14 @@ describe('validateProfile', () => {
     expect(validateProfile({ low: 43, high: 67, comfortableLow: 43, comfortableHigh: 67 }).ok).toBe(true)
   })
 
+  it('裏声の最高音も登録できる（地声の最高音より低くてもよい）', () => {
+    expect(validateProfile({ low: 43, high: 67, falsettoHigh: 74 })).toEqual({
+      ok: true,
+      profile: { low: 43, high: 67, falsettoHigh: 74 },
+    })
+    expect(validateProfile({ low: 43, high: 67, falsettoHigh: 64 }).ok).toBe(true)
+  })
+
   it('楽に出せる最低音 < 楽に出せる最高音 でなければエラー', () => {
     expect(validateProfile({ low: 43, high: 67, comfortableLow: 60, comfortableHigh: 60 }).ok).toBe(false)
   })

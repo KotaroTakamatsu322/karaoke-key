@@ -211,6 +211,57 @@ describe('判定ラベルと音域の図（④）', () => {
 
 })
 
+describe('地声と裏声を分ける（改善案 ③）', () => {
+  beforeEach(() => {
+    // 自分: 地声 lowG(43)〜mid2G(67)、裏声 〜 hiC(72)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile: { low: 43, high: 67, falsettoHigh: 72 } }))
+  })
+
+  it('裏声の最高音を入れて登録でき、届かないときは注意を出し、編集で消せる', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    render(<App />)
+
+    // 地声 mid1C(48)〜hiB(71)、裏声 〜 hiF(78): キー -4 で裏声は hiC#(74) になり、2半音 届かない
+    await user.type(screen.getByLabelText('曲名'), '曲1')
+    await user.selectOptions(screen.getByLabelText('最低音'), '48')
+    await user.selectOptions(screen.getByLabelText('最高音'), '71')
+    await user.selectOptions(screen.getByLabelText('裏声の最高音（任意）'), '78')
+    await user.click(screen.getByRole('button', { name: '登録する' }))
+
+    const item = () => within(screen.getByRole('listitem', { name: '曲1' }))
+    expect(item().getAllByTestId('recommended-key')[0].textContent).toBe('キー -4')
+    expect(item().getAllByTestId('falsetto-warning')[0].textContent).toBe('裏声が 2半音 届きません')
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).songs[0].falsettoHigh).toBe(78)
+
+    // 編集で裏声の最高音を消すと、注意も消える
+    await user.click(item().getByRole('button', { name: '編集' }))
+    await user.selectOptions(screen.getAllByLabelText('裏声の最高音（任意）')[0], '')
+    await user.click(screen.getByRole('button', { name: '変更を保存' }))
+    expect(item().queryByTestId('falsetto-warning')).toBeNull()
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).songs[0].falsettoHigh).toBeUndefined()
+  })
+
+  it('裏声の最高音が地声の最高音より低くても登録でき、図には文字だけで出す', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    // 地声 mid1C(48)〜hiB(71)、裏声 〜 mid2E(64)
+    await user.type(screen.getByLabelText('曲名'), '曲1')
+    await user.selectOptions(screen.getByLabelText('最低音'), '48')
+    await user.selectOptions(screen.getByLabelText('最高音'), '71')
+    await user.selectOptions(screen.getByLabelText('裏声の最高音（任意）'), '64')
+    await user.click(screen.getByRole('button', { name: '登録する' }))
+
+    const item = within(screen.getByRole('listitem', { name: '曲1' }))
+    expect(item.getAllByTestId('recommended-key')[0].textContent).toBe('キー -4')
+    expect(item.queryByTestId('falsetto-warning')).toBeNull()
+    expect(item.getByText(/mid1C 〜 hiB（裏声 〜 mid2E）/)).toBeTruthy()
+    // ピンクの棒は「自分」の行（裏声 hiC は地声 mid2G より高い）の1本だけ
+    expect(screen.getByRole('listitem', { name: '曲1' }).querySelectorAll('.range-fill.falsetto')).toHaveLength(1)
+  })
+})
+
 describe('2つの合わせ方のキーを並べる（改善案 ①）', () => {
   function song(id: string, low: number, high: number) {
     return { id, title: id, artist: '', low, high, createdAt: id, updatedAt: id }

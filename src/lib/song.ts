@@ -7,9 +7,11 @@ export type SongDraft = {
   artist: string
   low?: number
   high?: number
+  falsettoHigh?: number
 }
 
-export type SongValues = Pick<Song, 'title' | 'artist' | 'low' | 'high'>
+// falsettoHigh は編集で消せるように、未入力でも undefined として持つ
+export type SongValues = Pick<Song, 'title' | 'artist' | 'low' | 'high' | 'falsettoHigh'>
 
 /** 入力に問題がなければ曲の値を、あればエラーメッセージの一覧を返す */
 export function validateSong(
@@ -29,7 +31,7 @@ export function validateSong(
   if (errors.length > 0 || d.low === undefined || d.high === undefined) {
     return { ok: false, errors }
   }
-  return { ok: true, values: { title, artist, low: d.low, high: d.high } }
+  return { ok: true, values: { title, artist, low: d.low, high: d.high, falsettoHigh: d.falsettoHigh } }
 }
 
 /** 重ならない ID を作る（crypto.randomUUID は http のスマホ確認では使えないため予備を用意する） */

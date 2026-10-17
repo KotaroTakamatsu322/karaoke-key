@@ -4,7 +4,8 @@ import type { AlignMode, KeyResult, KeyStatus, VoiceProfile } from '../types'
 export const MACHINE_KEY_LIMIT = 7 // DAM のキー幅 ±7
 export const JOYSOUND_KEY_LIMIT = 6 // JOYSOUND のキー幅 ±6
 
-type SongRange = { low: number; high: number }
+// low・high は地声の音域。裏声の最高音はキーの計算には使わず、届くかどうかだけを調べる
+type SongRange = { low: number; high: number; falsettoHigh?: number }
 
 /** ずらし幅を、キー幅 ±limit のカラオケ機での設定値（オクターブとキー）に直す */
 export function toMachineKey(
@@ -60,5 +61,9 @@ export function calcKey(profile: VoiceProfile, song: SongRange, alignMode: Align
     shiftedLow,
     shiftedHigh,
     missingLow: Math.max(0, uLow - shiftedLow),
+    falsettoShortage:
+      song.falsettoHigh !== undefined && profile.falsettoHigh !== undefined
+        ? Math.max(0, song.falsettoHigh + shift - profile.falsettoHigh)
+        : 0,
   }
 }

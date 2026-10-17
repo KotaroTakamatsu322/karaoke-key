@@ -17,6 +17,7 @@ export function VoicePage({ profile, onSave }: Props) {
     high: profile?.high,
     comfortableLow: profile?.comfortableLow,
     comfortableHigh: profile?.comfortableHigh,
+    falsettoHigh: profile?.falsettoHigh,
   }))
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState('')
@@ -83,6 +84,20 @@ export function VoicePage({ profile, onSave }: Props) {
               id="comfortableHigh"
               value={draft.comfortableHigh}
               onChange={update('comfortableHigh')}
+              placeholder="未設定"
+            />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>裏声（任意）</legend>
+          <p className="hint">登録すると、曲の裏声の最高音に届くかを調べます。</p>
+          <div className="field">
+            <label htmlFor="falsettoHigh">裏声の最高音</label>
+            <NoteSelect
+              id="falsettoHigh"
+              value={draft.falsettoHigh}
+              onChange={update('falsettoHigh')}
               placeholder="未設定"
             />
           </div>

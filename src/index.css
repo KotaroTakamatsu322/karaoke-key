@@ -310,6 +310,7 @@ button.danger {
   --bar-original: #9e9eab;
   --bar-shifted: #1e88e5;
   --bar-missing: #e53935;
+  --bar-falsetto: #f0a8d0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -327,6 +328,7 @@ button.danger {
     --bar-original: #6c6c78;
     --bar-shifted: #64b5f6;
     --bar-missing: #ff6f61;
+    --bar-falsetto: #8a4a72;
   }
 }
 
@@ -364,6 +366,12 @@ button.danger {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--muted);
+}
+
+.falsetto-warning {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--st-wide);
 }
 
 .song-key-alt {
@@ -462,6 +470,10 @@ button.danger {
   background: var(--bar-shifted);
 }
 
+.range-fill.falsetto {
+  background: var(--bar-falsetto);
+}
+
 .range-fill.missing {
   background: var(--bar-missing);
   border-radius: 6px 0 0 6px;
@@ -545,4 +557,8 @@ button.danger {
 
 .swatch.voice-limit {
   background: var(--bar-voice-limit);
+}
+
+.swatch.falsetto {
+  background: var(--bar-falsetto);
 }

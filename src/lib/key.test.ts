@@ -57,3 +57,22 @@ describe('calcKey（その他）', () => {
     expect(calcKey(me, { low: 48, high: 64 }, 'center').shift).toBe(0)
   })
 })
+
+describe('calcKey（裏声）', () => {
+  const withFalsetto: VoiceProfile = { ...me, falsettoHigh: 72 } // 裏声は hiC まで
+
+  it('キーは地声の音域で決め、裏声の最高音はキーに使わない', () => {
+    const r = calcKey(withFalsetto, { low: 48, high: 71, falsettoHigh: 78 }, 'high')
+    expect(r).toMatchObject({ shift: -4, machineKey: -4 })
+  })
+
+  it('ずらした後の裏声の最高音が、自分の裏声の最高音を超える分を返す', () => {
+    expect(calcKey(withFalsetto, { low: 48, high: 71, falsettoHigh: 76 }, 'high').falsettoShortage).toBe(0)
+    expect(calcKey(withFalsetto, { low: 48, high: 71, falsettoHigh: 78 }, 'high').falsettoShortage).toBe(2)
+  })
+
+  it('曲か自分のどちらかの裏声が未登録なら 0', () => {
+    expect(calcKey(me, { low: 48, high: 71, falsettoHigh: 90 }, 'high').falsettoShortage).toBe(0)
+    expect(calcKey(withFalsetto, { low: 48, high: 71 }, 'high').falsettoShortage).toBe(0)
+  })
+})

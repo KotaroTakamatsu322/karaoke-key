@@ -19,6 +19,7 @@ export function SongForm({ song, artists, onSubmit, onCancel }: Props) {
     artist: song?.artist ?? '',
     low: song?.low,
     high: song?.high,
+    falsettoHigh: song?.falsettoHigh,
   }))
   const [errors, setErrors] = useState<string[]>([])
   const prefix = song ? 'edit' : 'new'
@@ -32,7 +33,7 @@ export function SongForm({ song, artists, onSubmit, onCancel }: Props) {
     }
     setErrors([])
     onSubmit(result.values)
-    if (!song) setDraft({ title: '', artist: '', low: undefined, high: undefined })
+    if (!song) setDraft({ title: '', artist: '', low: undefined, high: undefined, falsettoHigh: undefined })
   }
 
   return (
@@ -77,6 +78,16 @@ export function SongForm({ song, artists, onSubmit, onCancel }: Props) {
               onChange={(high) => setDraft((d) => ({ ...d, high }))}
             />
           </div>
+        </div>
+        <p className="hint">最低音・最高音は地声で入れてください。裏声の高い音があれば、下に分けて入れます。</p>
+        <div className="field">
+          <label htmlFor={`${prefix}-falsettoHigh`}>裏声の最高音（任意）</label>
+          <NoteSelect
+            id={`${prefix}-falsettoHigh`}
+            value={draft.falsettoHigh}
+            onChange={(falsettoHigh) => setDraft((d) => ({ ...d, falsettoHigh }))}
+            placeholder="なし"
+          />
         </div>
 
         {errors.length > 0 && (

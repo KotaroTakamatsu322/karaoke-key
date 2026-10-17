@@ -39,6 +39,15 @@ describe('validateSong', () => {
   it('最低音 < 最高音 でなければエラー', () => {
     expect(validateSong({ title: '曲A', artist: '', low: 64, high: 64 }).ok).toBe(false)
   })
+
+  it('裏声の最高音は任意（地声の最高音より低くてもよい）', () => {
+    expect(validateSong({ title: '曲A', artist: '', low: 48, high: 71, falsettoHigh: 76 })).toEqual({
+      ok: true,
+      values: { title: '曲A', artist: '', low: 48, high: 71, falsettoHigh: 76 },
+    })
+    // サビは地声で張り、やわらかい所だけ裏声の曲
+    expect(validateSong({ title: '曲A', artist: '', low: 48, high: 71, falsettoHigh: 64 }).ok).toBe(true)
+  })
 })
 
 describe('createSong / updateSong', () => {
@@ -121,6 +130,7 @@ describe('formatKeyResult', () => {
   it('オクターブ上・キー ±0', () => {
     const r: KeyResult = {
       shift: 12, machineKey: 0, octave: 1, status: 'octaveUp', shiftedLow: 0, shiftedHigh: 0, missingLow: 0,
+      falsettoShortage: 0,
     }
     expect(formatKeyResult(r)).toBe('1オクターブ上・キー ±0')
     expect(formatKeyResult({ ...r, shift: 3, machineKey: 3, octave: 0, status: 'adjusted' })).toBe('キー +3')

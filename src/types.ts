@@ -42,4 +42,5 @@ export type KeyResult = {
   shiftedLow: number
   shiftedHigh: number
   missingLow: number // 自分の音域より低くて出せない半音数
+  falsettoShortage: number // 曲の裏声の最高音が、自分の裏声の最高音に届かない半音数（どちらかが未登録なら 0）
 }

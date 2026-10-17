@@ -113,6 +113,11 @@ export function SongList({ songs, profile, onEdit, onDelete }: Props) {
                         <span className={`status status-${result.status}`} data-testid="status">
                           {STATUS_LABELS[result.status]}
                         </span>
+                        {result.falsettoShortage > 0 && (
+                          <span className="falsetto-warning" data-testid="falsetto-warning">
+                            裏声が {result.falsettoShortage}半音 届きません
+                          </span>
+                        )}
                       </div>
                     )
                   })}
@@ -124,6 +129,7 @@ export function SongList({ songs, profile, onEdit, onDelete }: Props) {
               ) : (
                 <div className="song-range">
                   {formatNote(song.low)} 〜 {formatNote(song.high)}
+                  {song.falsettoHigh !== undefined && `（裏声 〜 ${formatNote(song.falsettoHigh)}）`}
                 </div>
               )}
             </li>

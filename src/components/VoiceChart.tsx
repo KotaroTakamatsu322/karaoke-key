@@ -16,14 +16,15 @@ export function formatWidth(semitones: number): string {
   return rest === 0 ? `${octaves}オクターブ` : `${octaves}オクターブと${rest}半音`
 }
 
-/** 自分の音域（限界の音域と楽に出せる音域）を、目盛り付きの横棒で表示する */
+/** 自分の音域（限界の音域・楽に出せる音域・裏声）を、目盛り付きの横棒で表示する */
 export function VoiceChart({ profile }: { profile: VoiceProfile }) {
   const uLow = profile.comfortableLow ?? profile.low
   const uHigh = profile.comfortableHigh ?? profile.high
   const hasComfortable = uLow !== profile.low || uHigh !== profile.high
 
   const min = floorToA(Math.min(profile.low, SCALE_LOW))
-  const max = ceilToA(Math.max(profile.high + 1, SCALE_HIGH))
+  const top = Math.max(profile.falsettoHigh ?? profile.high, profile.high)
+  const max = ceilToA(Math.max(top + 1, SCALE_HIGH))
   const pos = (note: number) => ((note - min) / (max - min)) * 100
   // 1つの音を幅1つ分として塗る（最高音の右端まで含める）
   const span = (low: number, high: number) => ({ left: `${pos(low)}%`, width: `${pos(high + 1) - pos(low)}%` })
@@ -37,6 +38,10 @@ export function VoiceChart({ profile }: { profile: VoiceProfile }) {
         {ticks.map((n) => (
           <span key={n} className="voice-chart-tick" style={{ left: `${pos(n)}%` }} />
         ))}
+        {/* 裏声の方が低いときは棒を伸ばさず、下の文字だけで出す */}
+        {profile.falsettoHigh !== undefined && profile.falsettoHigh > profile.high && (
+          <span className="range-fill falsetto" style={span(profile.high + 1, profile.falsettoHigh)} />
+        )}
         {hasComfortable && <span className="range-fill voice-limit" style={span(profile.low, profile.high)} />}
         <span className="range-fill voice" style={span(uLow, uHigh)} />
       </div>
@@ -56,6 +61,12 @@ export function VoiceChart({ profile }: { profile: VoiceProfile }) {
           <div>
             <span className="swatch voice" />
             楽に出せる音域 {toJapanese(uLow)} 〜 {toJapanese(uHigh)}（{formatWidth(uHigh - uLow)}）
+          </div>
+        )}
+        {profile.falsettoHigh !== undefined && (
+          <div>
+            {profile.falsettoHigh > profile.high && <span className="swatch falsetto" />}
+            裏声 〜 {toJapanese(profile.falsettoHigh)}
           </div>
         )}
       </figcaption>
