@@ -6,12 +6,14 @@ import { NoteSelect } from './NoteSelect'
 type Props = {
   /** 編集するときは元の曲を渡す。なければ新しく登録する */
   song?: Song
+  /** アーティスト欄の候補（登録済みのアーティスト） */
+  artists: string[]
   onSubmit: (values: SongValues) => void
   onCancel?: () => void
 }
 
 /** 曲の登録・編集フォーム */
-export function SongForm({ song, onSubmit, onCancel }: Props) {
+export function SongForm({ song, artists, onSubmit, onCancel }: Props) {
   const [draft, setDraft] = useState<SongDraft>(() => ({
     title: song?.title ?? '',
     artist: song?.artist ?? '',
@@ -51,9 +53,16 @@ export function SongForm({ song, onSubmit, onCancel }: Props) {
           <input
             id={`${prefix}-artist`}
             className="text-input"
+            list={`${prefix}-artist-history`}
+            autoComplete="off"
             value={draft.artist}
             onChange={(e) => setDraft((d) => ({ ...d, artist: e.target.value }))}
           />
+          <datalist id={`${prefix}-artist-history`}>
+            {artists.map((a) => (
+              <option key={a} value={a} />
+            ))}
+          </datalist>
         </div>
         <div className="field-row">
           <div className="field">

@@ -40,7 +40,7 @@ type Props = {
 /** 曲の一覧（おすすめキー付き） */
 export function SongList({ songs, profile, onEdit, onDelete }: Props) {
   const [query, setQuery] = useState('')
-  const [order, setOrder] = useState<SongOrder>('newest')
+  const [order, setOrder] = useState<SongOrder>('artist')
 
   if (songs.length === 0) {
     return <p className="hint">まだ曲が登録されていません。</p>

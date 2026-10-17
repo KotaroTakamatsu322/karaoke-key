@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { KeyResult, Song } from '../types'
 import { calcKey } from './key'
 import {
+  artistNames,
   createSong,
   describeKeyResult,
   filterSongs,
@@ -93,6 +94,18 @@ describe('sortSongs', () => {
   it('元の配列は変えない', () => {
     sortSongs(songs, 'title')
     expect(songs[0].title).toBe('さくら')
+  })
+})
+
+describe('artistNames', () => {
+  it('重なりと空欄を除き、五十音順に並べる', () => {
+    const songs = [
+      song('曲1', 'ケツメイシ', '1'),
+      song('曲2', 'あいみょん', '2'),
+      song('曲3', 'ケツメイシ', '3'),
+      song('曲4', '', '4'),
+    ]
+    expect(artistNames(songs)).toEqual(['あいみょん', 'ケツメイシ'])
   })
 })
 

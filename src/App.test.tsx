@@ -140,6 +140,21 @@ describe('曲の登録・一覧（③）', () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).songs).toHaveLength(1)
   })
 
+  it('最初はアーティスト順に並び、登録済みのアーティストを候補に出す', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await addSong(user, '曲A', 'ケツメイシ', 48, 64)
+    await addSong(user, '曲B', 'あいみょん', 48, 64)
+
+    expect((screen.getByLabelText('並べ替え') as HTMLSelectElement).value).toBe('artist')
+    expect(screen.getAllByRole('listitem').map((li) => li.getAttribute('aria-label'))).toEqual(['曲B', '曲A'])
+
+    const input = screen.getByLabelText('アーティスト') as HTMLInputElement
+    const options = [...input.list!.querySelectorAll('option')].map((o) => o.value)
+    expect(options).toEqual(['あいみょん', 'ケツメイシ'])
+  })
+
   it('音域が未登録なら、登録を促すメッセージを出す', async () => {
     localStorage.clear()
     const user = userEvent.setup()

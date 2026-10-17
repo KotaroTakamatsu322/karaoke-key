@@ -64,9 +64,9 @@ function normalize(text: string): string {
 export type SongOrder = 'newest' | 'title' | 'artist'
 
 export const SONG_ORDERS: { value: SongOrder; label: string }[] = [
-  { value: 'newest', label: '新しく登録した順' },
-  { value: 'title', label: '曲名順' },
   { value: 'artist', label: 'アーティスト順' },
+  { value: 'title', label: '曲名順' },
+  { value: 'newest', label: '新しく登録した順' },
 ]
 
 const collator = new Intl.Collator('ja')
@@ -81,6 +81,12 @@ export function sortSongs(songs: Song[], order: SongOrder): Song[] {
     sorted.sort((a, b) => collator.compare(a.artist, b.artist) || collator.compare(a.title, b.title))
   }
   return sorted
+}
+
+/** 登録済みのアーティスト名（重なりと空欄を除き、五十音順） */
+export function artistNames(songs: Song[]): string[] {
+  const names = new Set(songs.map((s) => s.artist).filter((a) => a !== ''))
+  return [...names].sort(collator.compare)
 }
 
 function signed(n: number): string {

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { SongForm } from '../components/SongForm'
 import { SongList } from '../components/SongList'
-import type { SongValues } from '../lib/song'
+import { artistNames, type SongValues } from '../lib/song'
 import type { Song, VoiceProfile } from '../types'
 
 type Props = {
@@ -16,6 +16,7 @@ type Props = {
 /** 曲の一覧と登録 */
 export function SongsPage({ songs, profile, onAdd, onUpdate, onDelete, onGoToVoice }: Props) {
   const [editing, setEditing] = useState<Song | null>(null)
+  const artists = artistNames(songs)
 
   const handleDelete = (song: Song) => {
     if (!window.confirm(`「${song.title}」を削除しますか？`)) return
@@ -40,6 +41,7 @@ export function SongsPage({ songs, profile, onAdd, onUpdate, onDelete, onGoToVoi
         <SongForm
           key={editing.id}
           song={editing}
+          artists={artists}
           onSubmit={(values) => {
             onUpdate(editing, values)
             setEditing(null)
@@ -47,7 +49,7 @@ export function SongsPage({ songs, profile, onAdd, onUpdate, onDelete, onGoToVoi
           onCancel={() => setEditing(null)}
         />
       ) : (
-        <SongForm onSubmit={onAdd} />
+        <SongForm artists={artists} onSubmit={onAdd} />
       )}
 
       <SongList
