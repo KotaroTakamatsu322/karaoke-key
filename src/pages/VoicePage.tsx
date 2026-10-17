@@ -54,6 +54,7 @@ export function VoicePage({ profile, onSave }: Props) {
       {preview.ok && <VoiceChart profile={preview.profile} />}
 
       <form onSubmit={handleSubmit} noValidate>
+        <p className="hint">▶ を押すと、選んだ音が約1秒鳴ります（iPhone はマナーモードだと鳴らないことがあります）。</p>
         <fieldset>
           <legend>出せる音域（必須）</legend>
           <div className="field">

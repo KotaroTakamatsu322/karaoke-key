@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatNote, noteOptions, parseNote, toInternational, toJapanese } from './note'
+import { formatNote, noteOptions, parseNote, toFrequency, toInternational, toJapanese } from './note'
 
 describe('parseNote', () => {
   it('日本式の表記を読む', () => {
@@ -44,6 +44,14 @@ describe('MIDI番号から表記へ', () => {
       expect(parseNote(toJapanese(value))).toBe(value)
       expect(parseNote(toInternational(value))).toBe(value)
     }
+  })
+})
+
+describe('toFrequency', () => {
+  it('hiA (A4) は 440Hz、1オクターブ下がると半分', () => {
+    expect(toFrequency(69)).toBe(440)
+    expect(toFrequency(57)).toBe(220)
+    expect(toFrequency(60)).toBeCloseTo(261.63, 2) // mid2C（ド）
   })
 })
 

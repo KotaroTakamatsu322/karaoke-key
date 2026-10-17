@@ -1,6 +1,6 @@
 // 曲の入力チェック・検索・並べ替え・おすすめキーの表示
 import type { KeyResult, KeyStatus, Song } from '../types'
-import { JOYSOUND_KEY_LIMIT, toMachineKey } from './key'
+import { JOYSOUND_KEY_LIMIT, MACHINE_KEY_LIMIT, toMachineKey } from './key'
 
 export type SongDraft = {
   title: string
@@ -95,20 +95,29 @@ function signed(n: number): string {
   return n === 0 ? '±0' : `${n > 0 ? '+' : ''}${n}`
 }
 
-/** おすすめキーの表示（例: 「キー -4」「1オクターブ下・キー +3」「原曲キー」） */
-export function formatKeyResult(r: KeyResult): string {
-  const key = `キー ${signed(r.machineKey)}`
-  if (r.octave === -1) return `1オクターブ下・${key}`
-  if (r.octave === 1) return `1オクターブ上・${key}`
-  if (r.shift === 0) return '原曲キー'
+/** ずらし幅を、キー幅 ±limit のカラオケ機での設定として表示する（例: 「キー -4」「1オクターブ下・キー +3」「原曲キー」） */
+export function formatShift(shift: number, limit = MACHINE_KEY_LIMIT): string {
+  const { octave, machineKey } = toMachineKey(shift, limit)
+  const key = `キー ${signed(machineKey)}`
+  if (octave === -1) return `1オクターブ下・${key}`
+  if (octave === 1) return `1オクターブ上・${key}`
+  if (shift === 0) return '原曲キー'
   return key
 }
 
+/** おすすめキーの表示 */
+export function formatKeyResult(r: KeyResult): string {
+  return formatShift(r.shift)
+}
+
 /** JOYSOUND（キー幅 ±6）で設定が変わるとき（ずらし幅が ±7 のとき）だけ、その表示を返す */
+export function formatJoysoundShift(shift: number): string | null {
+  if (toMachineKey(shift, JOYSOUND_KEY_LIMIT).octave === toMachineKey(shift).octave) return null
+  return formatShift(shift, JOYSOUND_KEY_LIMIT)
+}
+
 export function formatJoysoundKey(r: KeyResult): string | null {
-  const j = toMachineKey(r.shift, JOYSOUND_KEY_LIMIT)
-  if (j.octave === r.octave) return null
-  return formatKeyResult({ ...r, ...j })
+  return formatJoysoundShift(r.shift)
 }
 
 /** 判定ラベル */

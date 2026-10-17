@@ -2,19 +2,32 @@ import { useState } from 'react'
 import { SongForm } from '../components/SongForm'
 import { SongList } from '../components/SongList'
 import { artistNames, type SongValues } from '../lib/song'
-import type { Song, VoiceProfile } from '../types'
+import type { SingRecord, Song, VoiceProfile } from '../types'
 
 type Props = {
   songs: Song[]
   profile: VoiceProfile | null
+  records: SingRecord[]
   onAdd: (values: SongValues) => void
   onUpdate: (song: Song, values: SongValues) => void
   onDelete: (song: Song) => void
+  onAddRecord: (record: SingRecord) => void
+  onDeleteRecord: (record: SingRecord) => void
   onGoToVoice: () => void
 }
 
 /** 曲の一覧と登録 */
-export function SongsPage({ songs, profile, onAdd, onUpdate, onDelete, onGoToVoice }: Props) {
+export function SongsPage({
+  songs,
+  profile,
+  records,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onAddRecord,
+  onDeleteRecord,
+  onGoToVoice,
+}: Props) {
   const [editing, setEditing] = useState<Song | null>(null)
   const artists = artistNames(songs)
 
@@ -55,6 +68,9 @@ export function SongsPage({ songs, profile, onAdd, onUpdate, onDelete, onGoToVoi
       <SongList
         songs={songs}
         profile={profile}
+        records={records}
+        onAddRecord={onAddRecord}
+        onDeleteRecord={onDeleteRecord}
         onEdit={(song) => {
           setEditing(song)
           window.scrollTo?.({ top: 0, behavior: 'smooth' })

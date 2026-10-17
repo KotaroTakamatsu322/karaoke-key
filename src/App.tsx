@@ -3,7 +3,7 @@ import { createSong, updateSong, type SongValues } from './lib/song'
 import { loadData, saveData, type AppData } from './lib/storage'
 import { SongsPage } from './pages/SongsPage'
 import { VoicePage } from './pages/VoicePage'
-import type { Song, VoiceProfile } from './types'
+import type { SingRecord, Song, VoiceProfile } from './types'
 
 type Tab = 'voice' | 'songs'
 
@@ -23,7 +23,18 @@ function App() {
   const editSong = (song: Song, values: SongValues) =>
     save({ ...data, songs: data.songs.map((s) => (s.id === song.id ? updateSong(s, values) : s)) })
 
-  const deleteSong = (song: Song) => save({ ...data, songs: data.songs.filter((s) => s.id !== song.id) })
+  // 曲を消したら、その曲の記録も消す
+  const deleteSong = (song: Song) =>
+    save({
+      ...data,
+      songs: data.songs.filter((s) => s.id !== song.id),
+      records: data.records.filter((r) => r.songId !== song.id),
+    })
+
+  const addRecord = (record: SingRecord) => save({ ...data, records: [...data.records, record] })
+
+  const deleteRecord = (record: SingRecord) =>
+    save({ ...data, records: data.records.filter((r) => r.id !== record.id) })
 
   return (
     <div className="app">
@@ -47,9 +58,12 @@ function App() {
           <SongsPage
             songs={data.songs}
             profile={data.profile}
+            records={data.records}
             onAdd={addSong}
             onUpdate={editSong}
             onDelete={deleteSong}
+            onAddRecord={addRecord}
+            onDeleteRecord={deleteRecord}
             onGoToVoice={() => setTab('voice')}
           />
         )}

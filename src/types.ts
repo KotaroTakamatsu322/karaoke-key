@@ -24,11 +24,14 @@ export type AlignMode = 'high' | 'center'
 
 export type Settings = { alignMode: AlignMode }
 
+export type Rating = 'tooHigh' | 'good' | 'tooLow'
+
+/** 歌った記録。オクターブ違いを区別できるよう、カラオケ機の値ではなくずらし幅で持つ */
 export type SingRecord = {
   id: string
   songId: string
-  machineKey: number
-  rating: 'easy' | 'good' | 'hard'
+  shift: number // 原曲からずらした半音数
+  rating: Rating
   date: string
 }
 

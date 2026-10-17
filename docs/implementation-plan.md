@@ -116,10 +116,11 @@ type Song = {
 
 type Settings = { alignMode: 'high' | 'center' };
 
-// ⑤ で追加
+// ⑤ で追加。オクターブ違い（例: オクターブ下のキー +3 と、そのままのキー +3）を区別するため、
+// カラオケ機の値ではなく、原曲からずらした半音数（shift）で持つ
 type SingRecord = {
-  id: string; songId: string; machineKey: number;
-  rating: 'easy' | 'good' | 'hard'; date: string;
+  id: string; songId: string; shift: number;
+  rating: 'tooHigh' | 'good' | 'tooLow'; date: string;
 };
 ```
 
@@ -197,8 +198,10 @@ my-app/
 
 ### ⑤ 試聴機能と歌った記録（A・D）
 - 試聴: `NoteSelect` の横に ▶ ボタン。Web Audio API の OscillatorNode で約1秒鳴らす
-- 記録: 曲ごとに「歌ったキー＋楽／ちょうどいい／きつい」を保存する
-- 補正: 直近の記録が「きつい」なら -1、「楽」なら +1 を提案する（最初は単純なルールにする）
+- 記録: 曲ごとに「歌ったキー＋高すぎ／ちょうどいい／低すぎ」を保存する
+  （最初は「楽／ちょうどいい／きつい」の予定だったが、きついだと高すぎか低すぎかが分からないため変えた）
+- 補正: 直近の記録が「高すぎ」なら -1、「低すぎ」なら +1、「ちょうどいい」ならそのままを、
+  「高め」「低め」の下に3行目「記録から」として出す（最初は単純なルールにする）
 - **完了の条件**: 記録が残り、次に開いたときに補正したキーが提案される
 
 ### ⑥ CSVの取り込み・書き出し、曲データの追加（F）

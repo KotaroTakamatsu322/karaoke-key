@@ -262,6 +262,99 @@ describe('地声と裏声を分ける（改善案 ③）', () => {
   })
 })
 
+describe('歌った記録（⑤）', () => {
+  beforeEach(() => {
+    // 自分 lowG(43)〜mid2G(67)。曲5 mid1D(50)〜hiA#(70) は 高め -3・低め -5
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        profile: { low: 43, high: 67 },
+        songs: [{ id: '曲5', title: '曲5', artist: '', low: 50, high: 70, createdAt: '1', updatedAt: '1' }],
+      }),
+    )
+  })
+
+  const item = () => within(screen.getByRole('listitem', { name: '曲5' }))
+  const recordKey = () => item().queryByTestId('record-key')?.textContent
+
+  it('記録すると「記録から」が出て、再読み込みしても残り、削除できる', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    expect(recordKey()).toBeUndefined()
+
+    // 最初は「高め」のキー（-3）が選ばれている
+    await user.click(item().getByRole('button', { name: '歌った記録をつける' }))
+    const form = within(item().getByRole('form', { name: '歌った記録' }))
+    expect((form.getByLabelText('歌ったキー') as HTMLSelectElement).value).toBe('-3')
+    expect(form.getByRole('button', { name: '記録する' })).toHaveProperty('disabled', true)
+
+    // キー -3 が高すぎた → 次は -4
+    await user.click(form.getByLabelText('高すぎ'))
+    await user.click(form.getByRole('button', { name: '記録する' }))
+    expect(recordKey()).toBe('キー -4')
+    expect(item().getByText(/前回 \d+\/\d+ キー -3：高すぎ/)).toBeTruthy()
+    expect(item().getByText('記録から')).toBeTruthy()
+
+    // 再読み込みしても残る
+    cleanup()
+    render(<App />)
+    expect(recordKey()).toBe('キー -4')
+
+    // 次の記録は「記録から」のキーが選ばれていて、新しい記録が優先される
+    await user.click(item().getByRole('button', { name: '歌った記録をつける' }))
+    const form2 = within(item().getByRole('form', { name: '歌った記録' }))
+    expect((form2.getByLabelText('歌ったキー') as HTMLSelectElement).value).toBe('-4')
+    await user.click(form2.getByLabelText('ちょうどいい'))
+    await user.click(form2.getByRole('button', { name: '記録する' }))
+    expect(recordKey()).toBe('キー -4')
+    expect(item().getByText('歌った記録（2件）')).toBeTruthy()
+
+    // 記録を全部消すと「記録から」も消える
+    for (const button of item().getAllByRole('button', { name: /の記録を削除/ })) await user.click(button)
+    expect(recordKey()).toBeUndefined()
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).records).toEqual([])
+  })
+
+  it('曲を消すと、その曲の記録も消える', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(<App />)
+
+    await user.click(item().getByRole('button', { name: '歌った記録をつける' }))
+    await user.click(item().getByLabelText('ちょうどいい'))
+    await user.click(item().getByRole('button', { name: '記録する' }))
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).records).toHaveLength(1)
+
+    await user.click(item().getByRole('button', { name: '削除' }))
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).records).toEqual([])
+  })
+})
+
+describe('試聴（⑤）', () => {
+  it('音を選ぶと ▶ が押せるようになり、押すと Web Audio で鳴らす', async () => {
+    const start = vi.fn()
+    const node = () => ({ connect: (next: unknown) => next ?? node(), start, stop: vi.fn(), frequency: {}, gain: { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() } })
+    vi.stubGlobal(
+      'AudioContext',
+      class {
+        state = 'running'
+        currentTime = 0
+        destination = {}
+        createOscillator = node
+        createGain = node
+      },
+    )
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(screen.getAllByRole('button', { name: '音を鳴らす' })[0]).toHaveProperty('disabled', true)
+    await user.selectOptions(screen.getByLabelText('最高音'), '67')
+    await user.click(screen.getByRole('button', { name: 'mid2Gを鳴らす' }))
+    expect(start).toHaveBeenCalledTimes(1)
+    vi.unstubAllGlobals()
+  })
+})
+
 describe('2つの合わせ方のキーを並べる（改善案 ①）', () => {
   function song(id: string, low: number, high: number) {
     return { id, title: id, artist: '', low, high, createdAt: id, updatedAt: id }

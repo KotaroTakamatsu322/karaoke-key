@@ -135,6 +135,21 @@ legend {
   width: 100%;
 }
 
+.note-select-row {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.note-select-row .note-select {
+  min-width: 0;
+}
+
+.play-button {
+  flex: none;
+  min-width: 2.6em;
+}
+
 .hint {
   color: var(--muted);
   font-size: 0.85rem;
@@ -374,6 +389,84 @@ button.danger {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--muted);
+}
+
+.record-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.record-button {
+  margin-top: 8px;
+}
+
+.record-form {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.record-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.rating-choices {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.rating-choices legend {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.rating-choices label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.rating-choices label.checked {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.rating-choices input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rating-choices label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+}
+
+.record-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+
+.record-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
 }
 
 .falsetto-warning {

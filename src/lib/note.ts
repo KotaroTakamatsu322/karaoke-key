@@ -65,6 +65,11 @@ export function parseNote(text: string): number {
   throw new Error(`音名が読めません: ${text}`)
 }
 
+/** 音の周波数（Hz）。hiA (A4) = 440Hz */
+export function toFrequency(midi: number): number {
+  return 440 * 2 ** ((midi - 69) / 12)
+}
+
 /** 選択肢の一覧（lowlowA〜hihiG#） */
 export function noteOptions(): { value: number; label: string }[] {
   const options = []

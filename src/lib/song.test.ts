@@ -7,7 +7,9 @@ import {
   describeKeyResult,
   filterSongs,
   formatJoysoundKey,
+  formatJoysoundShift,
   formatKeyResult,
+  formatShift,
   sortSongs,
   STATUS_LABELS,
   updateSong,
@@ -134,6 +136,21 @@ describe('formatKeyResult', () => {
     }
     expect(formatKeyResult(r)).toBe('1オクターブ上・キー ±0')
     expect(formatKeyResult({ ...r, shift: 3, machineKey: 3, octave: 0, status: 'adjusted' })).toBe('キー +3')
+  })
+})
+
+describe('formatShift / formatJoysoundShift（ずらし幅から表示する）', () => {
+  it('カラオケ機の設定に直して表示する', () => {
+    expect(formatShift(0)).toBe('原曲キー')
+    expect(formatShift(-5)).toBe('キー -5')
+    expect(formatShift(-8)).toBe('1オクターブ下・キー +4')
+    expect(formatShift(9)).toBe('1オクターブ上・キー -3')
+  })
+
+  it('±6 の機種は、ずらし幅 ±7 のときだけ設定が変わる', () => {
+    expect(formatJoysoundShift(-7)).toBe('1オクターブ下・キー +5')
+    expect(formatJoysoundShift(-6)).toBeNull()
+    expect(formatJoysoundShift(-8)).toBeNull()
   })
 })
 
