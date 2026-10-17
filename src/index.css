@@ -60,6 +60,14 @@ h1 {
   margin: 0 0 8px;
 }
 
+.tagline {
+  display: inline-block; /* 収まらないときはまとめて次の行へ折り返す */
+  margin-left: 8px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
 h2 {
   font-size: 1.1rem;
   margin: 16px 0 8px;

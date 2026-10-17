@@ -28,7 +28,9 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>カラオケ キー調整</h1>
+        <h1>
+          キー丸<span className="tagline">キー変更を丸っと楽に</span>
+        </h1>
         <nav className="tabs">
           <button type="button" aria-pressed={tab === 'songs'} onClick={() => setTab('songs')}>
             曲
