@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatNote, noteOptions, parseNote, toFrequency, toInternational, toJapanese } from './note'
+import { formatNote, noteName, noteOptions, parseNote, toFrequency, toInternational, toJapanese } from './note'
 
 describe('parseNote', () => {
   it('日本式の表記を読む', () => {
@@ -23,6 +23,11 @@ describe('parseNote', () => {
     expect(() => parseNote('')).toThrow()
     expect(() => parseNote('H4')).toThrow()
   })
+
+  it('ない音名（E#・B# など）はエラーにする', () => {
+    expect(() => parseNote('mid2E#')).toThrow('音名が読めません')
+    expect(() => parseNote('B#3')).toThrow('音名が読めません')
+  })
 })
 
 describe('MIDI番号から表記へ', () => {
@@ -37,6 +42,8 @@ describe('MIDI番号から表記へ', () => {
   it('範囲外はエラーにする', () => {
     expect(() => toJapanese(20)).toThrow()
     expect(() => toJapanese(93)).toThrow()
+    expect(() => toInternational(-1)).toThrow('範囲外の音です')
+    expect(() => toInternational(128)).toThrow('範囲外の音です')
   })
 
   it('変換して戻すと同じ値になる', () => {
@@ -44,6 +51,24 @@ describe('MIDI番号から表記へ', () => {
       expect(parseNote(toJapanese(value))).toBe(value)
       expect(parseNote(toInternational(value))).toBe(value)
     }
+  })
+})
+
+describe('noteName（短い表示）', () => {
+  it('選べる範囲は日本式、外（キーをずらした後など）は国際表記', () => {
+    expect(noteName(67)).toBe('mid2G')
+    expect(noteName(21)).toBe('lowlowA')
+    expect(noteName(92)).toBe('hihiG#')
+    expect(noteName(20)).toBe('G#0')
+    expect(noteName(98)).toBe('D7')
+  })
+})
+
+describe('parseNote（そのほかの書き方）', () => {
+  it('大文字・小文字、前後の空白、フラットを受け付ける', () => {
+    expect(parseNote(' MID2G ')).toBe(67)
+    expect(parseNote('hiBb')).toBe(70)
+    expect(parseNote('c#4')).toBe(61)
   })
 })
 

@@ -23,6 +23,13 @@ describe('songRecords', () => {
     ]
     expect(songRecords(records, '曲1').map((r) => r.shift)).toEqual([-6, -5])
   })
+
+  it('記録がない曲は空。元の配列の順は変えない', () => {
+    const records = [record('曲1', -5, 'tooHigh', '2026-10-01'), record('曲1', -6, 'good', '2026-10-17')]
+    expect(songRecords(records, '曲2')).toEqual([])
+    songRecords(records, '曲1')
+    expect(records.map((r) => r.shift)).toEqual([-5, -6])
+  })
 })
 
 describe('suggestShift', () => {

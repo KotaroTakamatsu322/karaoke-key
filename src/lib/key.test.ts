@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcKey } from './key'
+import { calcKey, toMachineKey } from './key'
 import type { VoiceProfile } from '../types'
 
 // 実装手順書 7章: 自分の音域は lowG(43)〜mid2G(67)
@@ -55,6 +55,45 @@ describe('calcKey（その他）', () => {
 
   it('center でも原曲キーで歌えるなら 0', () => {
     expect(calcKey(me, { low: 48, high: 64 }, 'center').shift).toBe(0)
+  })
+})
+
+describe('toMachineKey（カラオケ機の設定値に直す）', () => {
+  it('キー幅 ±7: -7〜+7 はそのまま、外は1オクターブずらす', () => {
+    expect(toMachineKey(-7)).toEqual({ octave: 0, machineKey: -7 })
+    expect(toMachineKey(-8)).toEqual({ octave: -1, machineKey: 4 })
+    expect(toMachineKey(7)).toEqual({ octave: 0, machineKey: 7 })
+    expect(toMachineKey(8)).toEqual({ octave: 1, machineKey: -4 })
+    expect(toMachineKey(0)).toEqual({ octave: 0, machineKey: 0 })
+  })
+
+  it('キー幅 ±6（JOYSOUND）: ±7 から1オクターブずらす', () => {
+    expect(toMachineKey(-6, 6)).toEqual({ octave: 0, machineKey: -6 })
+    expect(toMachineKey(-7, 6)).toEqual({ octave: -1, machineKey: 5 })
+    expect(toMachineKey(7, 6)).toEqual({ octave: 1, machineKey: -5 })
+  })
+})
+
+describe('calcKey（±7 の境目）', () => {
+  it('ずらし幅 -7 はキー調整、-8 はオクターブ下推奨', () => {
+    expect(calcKey(me, { low: 50, high: 74 }, 'high')).toMatchObject({ shift: -7, status: 'adjusted', octave: 0 })
+    expect(calcKey(me, { low: 52, high: 75 }, 'high')).toMatchObject({ shift: -8, status: 'octaveDown', machineKey: 4 })
+  })
+
+  it('音域が足りない曲は、ずらし幅が -8 より下でも「音域が足りない」を優先する', () => {
+    // 曲 mid1C(48)〜hihiC(84): 高音に合わせると -17、低音が 22半音 出ない
+    const r = calcKey(me, { low: 48, high: 84 }, 'high')
+    expect(r).toMatchObject({ shift: -17, status: 'tooWide', octave: -1, machineKey: -5 })
+    expect(r.missingLow).toBe(43 - (48 - 17))
+  })
+
+  it('音域が足りない曲は、合わせ方 center でも高音側に合わせる', () => {
+    expect(calcKey(me, { low: 41, high: 72 }, 'center').shift).toBe(-5)
+  })
+
+  it('楽に出せる最低音だけ登録したときも、そちらを使う', () => {
+    // 楽に出せる最低音 mid1C(48)。曲 lowA#(46)〜mid2E(64) は低音が足りないので上げる
+    expect(calcKey({ ...me, comfortableLow: 48 }, { low: 46, high: 64 }, 'high')).toMatchObject({ shift: 3 })
   })
 })
 

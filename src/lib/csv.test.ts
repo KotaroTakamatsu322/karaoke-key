@@ -93,6 +93,27 @@ describe('songsToCsv / parseSongsCsv', () => {
   })
 })
 
+describe('parseSongsCsv（そのほか）', () => {
+  it('空のファイル・見出しだけのファイルは、曲もエラーもなし', () => {
+    expect(parseSongsCsv('')).toEqual({ values: [], errors: [] })
+    expect(parseSongsCsv('﻿曲名,アーティスト,最低音,最高音\r\n')).toEqual({ values: [], errors: [] })
+  })
+
+  it('2行目以降に「曲名」という曲があっても、見出しとして飛ばさない', () => {
+    const { values } = parseSongsCsv('曲名,アーティスト,最低音,最高音\n曲名,歌手,mid1C,hiA\n')
+    expect(values.map((v) => v.title)).toEqual(['曲名'])
+  })
+
+  it('曲名に改行が入っていても、書き出し→取り込みで元に戻る', () => {
+    const songs = [song('1', '1行目\n2行目', 'A', 48, 64)]
+    expect(parseSongsCsv(songsToCsv(songs)).values[0].title).toBe('1行目\n2行目')
+  })
+
+  it('曲名・アーティストの前後の空白は取る', () => {
+    expect(parseSongsCsv(' 曲A , 歌手A ,mid1C,hiA').values[0]).toMatchObject({ title: '曲A', artist: '歌手A' })
+  })
+})
+
 describe('mergeSongs', () => {
   const now = new Date('2026-10-17T00:00:00Z')
   const existing = [song('id-1', '喜劇', '星野源', 45, 71)]

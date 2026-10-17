@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { toFrequency } from './note'
-import { BUFFER_SIZE, detectPitch, NoteTracker, toMidiFloat } from './pitch'
+import { BUFFER_SIZE, detectPitch, NoteTracker, rms, toMidiFloat } from './pitch'
 
 const SAMPLE_RATE = 48000
 const SIZE = BUFFER_SIZE // 画面（VoiceMeter）と同じ長さで調べる
@@ -128,6 +128,13 @@ describe('detectPitch', () => {
     const random = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1
     const noise = Float32Array.from({ length: SIZE }, () => 0.5 * random())
     expect(detectPitch(noise, SAMPLE_RATE)).toBeNull()
+  })
+})
+
+describe('rms', () => {
+  it('無音は 0、振れ幅 a のきれいな音は a/√2', () => {
+    expect(rms(new Float32Array(SIZE))).toBe(0)
+    expect(rms(wave(60, sine, 0.5))).toBeCloseTo(0.5 / Math.SQRT2, 2)
   })
 })
 

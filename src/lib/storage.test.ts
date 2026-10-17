@@ -25,6 +25,30 @@ describe('storage', () => {
     expect(loadData(fakeStore({ [STORAGE_KEY]: '{壊れた' }))).toEqual(emptyData())
   })
 
+  it('一部だけ保存されているデータ（古い版など）は、足りないところを空で補う', () => {
+    const store = fakeStore({ [STORAGE_KEY]: JSON.stringify({ profile: { low: 43, high: 67 } }) })
+    expect(loadData(store)).toEqual({ ...emptyData(), profile: { low: 43, high: 67 } })
+  })
+
+  it('形のおかしい欄（配列でない songs・records）は空にする', () => {
+    const store = fakeStore({ [STORAGE_KEY]: JSON.stringify({ songs: 'x', records: { a: 1 }, settings: null }) })
+    const data = loadData(store)
+    expect(data.songs).toEqual([])
+    expect(data.records).toEqual([])
+    expect(data.settings).toEqual({ alignMode: 'high' })
+  })
+
+  it('曲と歌った記録も、保存して読み直せる', () => {
+    const store = fakeStore()
+    const data = {
+      ...emptyData(),
+      songs: [{ id: 's1', title: '曲', artist: '', low: 48, high: 64, favorite: true, createdAt: '1', updatedAt: '1' }],
+      records: [{ id: 'r1', songId: 's1', shift: -3, rating: 'good' as const, date: '2026-10-17T00:00:00.000Z' }],
+    }
+    saveData(data, store)
+    expect(loadData(store)).toEqual(data)
+  })
+
   it('読み書きで例外が出ても止まらない', () => {
     const broken = {
       getItem: () => {

@@ -11,6 +11,8 @@ import {
   formatJoysoundShift,
   formatKeyResult,
   formatShift,
+  newId,
+  normalize,
   searchSuggestions,
   sortSongs,
   STATUS_LABELS,
@@ -51,6 +53,38 @@ describe('validateSong', () => {
     })
     // サビは地声で張り、やわらかい所だけ裏声の曲
     expect(validateSong({ title: '曲A', artist: '', low: 48, high: 71, falsettoHigh: 64 }).ok).toBe(true)
+  })
+})
+
+describe('newId', () => {
+  it('毎回ちがう ID を作る', () => {
+    const ids = new Set(Array.from({ length: 100 }, () => newId()))
+    expect(ids.size).toBe(100)
+  })
+
+  it('crypto.randomUUID が使えないとき（http のスマホ確認）も作れる', () => {
+    const original = crypto.randomUUID
+    Object.defineProperty(crypto, 'randomUUID', {
+      configurable: true,
+      value: () => {
+        throw new Error('insecure context')
+      },
+    })
+    try {
+      const a = newId()
+      const b = newId()
+      expect(a).not.toBe('')
+      expect(a).not.toBe(b)
+    } finally {
+      Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: original })
+    }
+  })
+})
+
+describe('normalize', () => {
+  it('全角・半角、大文字・小文字をそろえ、前後の空白を取る', () => {
+    expect(normalize('  ＡＢＣ　ｄｅｆ ')).toBe('abc def')
+    expect(normalize('ｶﾞｸ')).toBe('ガク')
   })
 })
 
@@ -250,5 +284,11 @@ describe('判定ラベルと説明（④）', () => {
     expect(describe_(48, 64)).toBe('原曲キーのまま歌えます')
     expect(describe_(55, 76)).toBe('1オクターブ下で歌い、キーは +3')
     expect(describe_(41, 72)).toBe('高い音に合わせるとキー -5。低い音が 7半音 出ません')
+  })
+
+  it('オクターブ上推奨（声が高い人向け）の判定と説明', () => {
+    const r = calcKey(me, { low: 30, high: 50 }, 'high')
+    expect(STATUS_LABELS[r.status]).toBe('オクターブ上推奨')
+    expect(describeKeyResult(r)).toBe('1オクターブ上で歌い、キーは +5')
   })
 })
