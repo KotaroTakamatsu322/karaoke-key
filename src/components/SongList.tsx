@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calcKey } from '../lib/key'
+import { calcKey, toMachineKey } from '../lib/key'
 import { playNote } from '../lib/audio'
 import { formatNote, noteName } from '../lib/note'
 import { createRecord, formatDate, RATING_LABELS, songRecords, suggestShift } from '../lib/record'
@@ -17,7 +17,7 @@ import {
   STATUS_LABELS,
   type SongOrder,
 } from '../lib/song'
-import type { KeyResult, SingRecord, Song, VoiceProfile } from '../types'
+import type { KeyResult, KeyStatus, SingRecord, Song, VoiceProfile } from '../types'
 import { RangeBar } from './RangeBar'
 import { RecordForm } from './RecordForm'
 
@@ -165,6 +165,7 @@ function SongCard({ song, profile, records, onEdit, onDelete, onAddRecord, onDel
             label={options.length > 1 || latest ? label : undefined}
             shift={result.shift}
             songHigh={song.high}
+            tone={result.status}
           >
             <span className={`status status-${result.status}`} data-testid="status">
               {STATUS_LABELS[result.status]}
@@ -184,7 +185,7 @@ function SongCard({ song, profile, records, onEdit, onDelete, onAddRecord, onDel
       )}
 
       {latest && suggested !== undefined && (
-        <KeyRow label="記録から" shift={suggested} songHigh={song.high} testId="record-key">
+        <KeyRow label="記録から" shift={suggested} songHigh={song.high} tone="record" testId="record-key">
           <span className="record-note">
             前回 {formatDate(latest.date)} {formatShift(latest.shift)}：{RATING_LABELS[latest.rating]}
           </span>
@@ -239,11 +240,12 @@ function SongCard({ song, profile, records, onEdit, onDelete, onAddRecord, onDel
   )
 }
 
-/** キー1行分（ラベル・キー・最高音を鳴らす ▶・±6 の機種の設定・その他の表示） */
+/** キー1行分（ラベル・キー・最高音を鳴らす ▶・キーのメーター・±6 の機種の設定・その他の表示） */
 function KeyRow({
   label,
   shift,
   songHigh,
+  tone,
   testId = 'recommended-key',
   children,
 }: {
@@ -251,32 +253,70 @@ function KeyRow({
   shift: number
   /** 曲の地声の最高音（原曲） */
   songHigh: number
+  /** キーの文字とメーターの色。判定の色とそろえる（「記録から」は金色） */
+  tone: KeyStatus | 'record'
   testId?: string
   children: React.ReactNode
 }) {
   const joysoundKey = formatJoysoundShift(shift)
   const top = songHigh + shift // このキーで歌ったときの最高音
   return (
-    <div className="song-result">
-      {label && <span className="key-label">{label}</span>}
-      <span className="song-key" data-testid={testId}>
-        {formatShift(shift)}
-      </span>
-      <button
-        type="button"
-        className="small play-button"
-        aria-label={`${formatShift(shift)} の最高音 ${noteName(top)} を鳴らす`}
-        title={`最高音 ${noteName(top)} を鳴らす`}
-        onClick={() => playNote(top)}
-      >
-        ▶
-      </button>
-      {joysoundKey && (
-        <span className="song-key-alt" data-testid="joysound-key">
-          ±6: {joysoundKey}
+    <div className={`key-row tone-${tone}`}>
+      <div className="key-line">
+        {label && <span className="key-label">{label}</span>}
+        <span className="song-key" data-testid={testId}>
+          {formatShift(shift)}
         </span>
-      )}
-      {children}
+        <button
+          type="button"
+          className="play-button"
+          aria-label={`${formatShift(shift)} の最高音 ${noteName(top)} を鳴らす`}
+          title={`最高音 ${noteName(top)} を鳴らす`}
+          onClick={() => playNote(top)}
+        >
+          ▶
+        </button>
+      </div>
+      <KeyMeter shift={shift} />
+      <div className="key-notes">
+        {children}
+        {joysoundKey && (
+          <span className="song-key-alt" data-testid="joysound-key">
+            ±6: {joysoundKey}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const METER_STEPS = Array.from({ length: 15 }, (_, i) => i - 7) // -7 〜 +7
+
+/**
+ * カラオケのリモコンのキー表示をまねたメーター。0 から設定するキーまでを光らせる。
+ * 数字を読まなくても、どれだけ下げる（上げる）かが形でわかるように。読み上げは数字の方で足りるので隠す
+ */
+function KeyMeter({ shift }: { shift: number }) {
+  const { machineKey, octave } = toMachineKey(shift)
+  const lit = (step: number) => (machineKey < 0 ? step >= machineKey && step < 0 : step <= machineKey && step > 0)
+  return (
+    <div className="key-meter" aria-hidden="true">
+      {octave !== 0 && <span className="meter-octave">{octave < 0 ? 'オク下' : 'オク上'}</span>}
+      <div className="meter-cells">
+        {METER_STEPS.map((step) => (
+          <span
+            key={step}
+            className={['meter-cell', step === 0 && 'meter-zero', lit(step) && 'meter-lit', step === machineKey && step !== 0 && 'meter-at']
+              .filter(Boolean)
+              .join(' ')}
+          />
+        ))}
+      </div>
+      <div className="meter-scale">
+        <span>−7</span>
+        <span>0</span>
+        <span>+7</span>
+      </div>
     </div>
   )
 }
