@@ -484,3 +484,65 @@ button.danger {
 .range-missing {
   color: var(--st-wide);
 }
+
+.voice-chart {
+  margin: 0 0 16px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.voice-chart-track {
+  position: relative;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.voice-chart-track .range-fill {
+  border-radius: 4px;
+}
+
+.voice-chart-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--border);
+}
+
+.voice-chart-scale {
+  position: relative;
+  height: 1.4em;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.voice-chart-scale span {
+  position: absolute;
+  top: 2px;
+  text-align: center;
+}
+
+.voice-chart-legend {
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
+.swatch {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -0.1em;
+}
+
+.swatch.voice {
+  background: var(--bar-voice);
+}
+
+.swatch.voice-limit {
+  background: var(--bar-voice-limit);
+}

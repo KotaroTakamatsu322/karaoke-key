@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NoteSelect } from '../components/NoteSelect'
+import { VoiceChart } from '../components/VoiceChart'
 import { formatNote } from '../lib/note'
 import { validateProfile, type ProfileDraft } from '../lib/profile'
 import type { VoiceProfile } from '../types'
@@ -19,6 +20,7 @@ export function VoicePage({ profile, onSave }: Props) {
   }))
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState('')
+  const preview = validateProfile(draft)
 
   const update = (key: keyof ProfileDraft) => (value: number | undefined) => {
     setDraft((d) => ({ ...d, [key]: value }))
@@ -46,6 +48,9 @@ export function VoicePage({ profile, onSave }: Props) {
           登録中: {formatNote(profile.low)} 〜 {formatNote(profile.high)}
         </p>
       )}
+
+      {/* 選んでいる途中の音域をそのまま図にする（入力に問題があるあいだは出さない） */}
+      {preview.ok && <VoiceChart profile={preview.profile} />}
 
       <form onSubmit={handleSubmit} noValidate>
         <fieldset>

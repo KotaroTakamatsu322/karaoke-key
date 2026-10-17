@@ -41,6 +41,26 @@ describe('自分の音域の登録（②）', () => {
     expect((screen.getByLabelText('楽に出せる最低音') as HTMLSelectElement).value).toBe('')
   })
 
+  it('選んだ音域をその場で図にする（改善案 ②）', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    expect(screen.queryByRole('figure', { name: '自分の音域の図' })).toBeNull()
+
+    await user.selectOptions(screen.getByLabelText('最低音'), '43')
+    await user.selectOptions(screen.getByLabelText('最高音'), '67')
+    const chart = () => within(screen.getByRole('figure', { name: '自分の音域の図' }))
+    expect(chart().getByText(/出せる音域 lowG 〜 mid2G（2オクターブ）/)).toBeTruthy()
+    expect(chart().getByText('mid1')).toBeTruthy() // 目盛り
+    expect(chart().queryByText(/楽に出せる音域/)).toBeNull()
+
+    await user.selectOptions(screen.getByLabelText('楽に出せる最高音'), '65')
+    expect(chart().getByText(/楽に出せる音域 lowG 〜 mid2F（1オクターブと10半音）/)).toBeTruthy()
+
+    // 入力に問題があるあいだは出さない
+    await user.selectOptions(screen.getByLabelText('最高音'), '43')
+    expect(screen.queryByRole('figure', { name: '自分の音域の図' })).toBeNull()
+  })
+
   it('入力に問題があれば保存しない', async () => {
     const user = userEvent.setup()
     render(<App />)
