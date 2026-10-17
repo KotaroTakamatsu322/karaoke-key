@@ -65,8 +65,9 @@ describe('曲の登録・一覧（③）', () => {
     await user.click(screen.getByRole('button', { name: '登録する' }))
   }
 
+  // 高め（最高音に合わせる）のキー
   function keyOf(title: string) {
-    return within(screen.getByRole('listitem', { name: title })).getByTestId('recommended-key').textContent
+    return within(screen.getByRole('listitem', { name: title })).getAllByTestId('recommended-key')[0].textContent
   }
 
   beforeEach(() => {
@@ -140,7 +141,7 @@ describe('判定ラベルと音域の図（④）', () => {
   }
 
   function statusOf(title: string) {
-    return within(screen.getByRole('listitem', { name: title })).getByTestId('status').textContent
+    return within(screen.getByRole('listitem', { name: title })).getAllByTestId('status')[0].textContent
   }
 
   beforeEach(() => {
@@ -160,8 +161,9 @@ describe('判定ラベルと音域の図（④）', () => {
     expect(statusOf('曲3')).toBe('オクターブ下推奨')
     expect(statusOf('曲4')).toBe('音域が足りない')
 
-    const item3 = within(screen.getByRole('listitem', { name: '曲3' }))
-    expect(item3.getByText('1オクターブ下で歌い、キーは +3')).toBeTruthy()
+    // キーが1つにまとまる曲は、歌い方の説明を出す
+    const item4 = within(screen.getByRole('listitem', { name: '曲4' }))
+    expect(item4.getByText('高い音に合わせるとキー -5。低い音が 7半音 出ません')).toBeTruthy()
   })
 
   it('音域の図で、自分・原曲・調整後の音域と出せない低音を表示する', () => {
@@ -172,18 +174,48 @@ describe('判定ラベルと音域の図（④）', () => {
     expect(item4.getByText(/低い音が 7半音 出ない/)).toBeTruthy()
   })
 
-  it('合わせ方を切り替えると、おすすめキーが変わり、保存される', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-    const keyOf5 = () => within(screen.getByRole('listitem', { name: '曲5' })).getByTestId('recommended-key').textContent
+})
 
-    expect(keyOf5()).toBe('キー -3')
-    await user.click(screen.getByLabelText('真ん中に合わせる'))
-    expect(keyOf5()).toBe('キー -5')
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).settings).toEqual({ alignMode: 'center' })
+describe('2つの合わせ方のキーを並べる（改善案 ①）', () => {
+  function song(id: string, low: number, high: number) {
+    return { id, title: id, artist: '', low, high, createdAt: id, updatedAt: id }
+  }
 
-    cleanup()
+  function keysOf(title: string) {
+    const item = within(screen.getByRole('listitem', { name: title }))
+    return item.getAllByTestId('recommended-key').map((el) => el.textContent)
+  }
+
+  beforeEach(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        profile: { low: 43, high: 67 },
+        songs: [song('曲5', 50, 70), song('曲2', 48, 64), song('曲4', 41, 72), song('曲6', 50, 74)],
+      }),
+    )
+  })
+
+  it('高め（最高音に合わせる）と低め（真ん中に合わせる）を並べて出す', () => {
     render(<App />)
-    expect(keyOf5()).toBe('キー -5')
+    const item5 = within(screen.getByRole('listitem', { name: '曲5' }))
+    expect(keysOf('曲5')).toEqual(['キー -3', 'キー -5'])
+    expect(item5.getAllByText('高め')).toHaveLength(2) // キーの行と音域の図
+    expect(item5.getAllByText('低め')).toHaveLength(2)
+    expect(screen.queryByLabelText('真ん中に合わせる')).toBeNull() // 切り替えはなくなった
+  })
+
+  it('同じキーになるときは1つだけ出す', () => {
+    render(<App />)
+    expect(keysOf('曲2')).toEqual(['原曲キー'])
+    expect(keysOf('曲4')).toEqual(['キー -5'])
+    expect(within(screen.getByRole('listitem', { name: '曲2' })).queryByText('高め')).toBeNull()
+  })
+
+  it('ずらし幅 -7 のときは ±6 の機種の設定も添える', () => {
+    render(<App />)
+    const item6 = within(screen.getByRole('listitem', { name: '曲6' }))
+    expect(keysOf('曲6')).toEqual(['キー -7'])
+    expect(item6.getByTestId('joysound-key').textContent).toBe('±6: 1オクターブ下・キー +5')
   })
 })

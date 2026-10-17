@@ -1,32 +1,20 @@
 import { useState } from 'react'
-import { AlignModeSwitch } from '../components/AlignModeSwitch'
 import { SongForm } from '../components/SongForm'
 import { SongList } from '../components/SongList'
 import type { SongValues } from '../lib/song'
-import type { AlignMode, Song, VoiceProfile } from '../types'
+import type { Song, VoiceProfile } from '../types'
 
 type Props = {
   songs: Song[]
   profile: VoiceProfile | null
-  alignMode: AlignMode
   onAdd: (values: SongValues) => void
   onUpdate: (song: Song, values: SongValues) => void
   onDelete: (song: Song) => void
-  onChangeAlignMode: (mode: AlignMode) => void
   onGoToVoice: () => void
 }
 
 /** 曲の一覧と登録 */
-export function SongsPage({
-  songs,
-  profile,
-  alignMode,
-  onAdd,
-  onUpdate,
-  onDelete,
-  onChangeAlignMode,
-  onGoToVoice,
-}: Props) {
+export function SongsPage({ songs, profile, onAdd, onUpdate, onDelete, onGoToVoice }: Props) {
   const [editing, setEditing] = useState<Song | null>(null)
 
   const handleDelete = (song: Song) => {
@@ -62,12 +50,9 @@ export function SongsPage({
         <SongForm onSubmit={onAdd} />
       )}
 
-      {profile && songs.length > 0 && <AlignModeSwitch value={alignMode} onChange={onChangeAlignMode} />}
-
       <SongList
         songs={songs}
         profile={profile}
-        alignMode={alignMode}
         onEdit={(song) => {
           setEditing(song)
           window.scrollTo?.({ top: 0, behavior: 'smooth' })

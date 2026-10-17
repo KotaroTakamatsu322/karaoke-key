@@ -11,19 +11,34 @@ import {
   STATUS_LABELS,
   type SongOrder,
 } from '../lib/song'
-import type { AlignMode, Song, VoiceProfile } from '../types'
+import type { KeyResult, Song, VoiceProfile } from '../types'
 import { RangeBar } from './RangeBar'
+
+export type KeyOption = { label: string; result: KeyResult }
+
+/**
+ * 2つの合わせ方のキーを並べる（カラオケで試すと、ちょうどいいキーは2つのあいだにあった）。
+ * 同じキーになるとき（原曲キー・音域が足りない・ずらせる幅が1つだけ）は1つにまとめる
+ */
+function keyOptions(profile: VoiceProfile, song: Song): KeyOption[] {
+  const high = calcKey(profile, song, 'high')
+  const center = calcKey(profile, song, 'center')
+  if (high.shift === center.shift) return [{ label: 'おすすめ', result: high }]
+  return [
+    { label: '高め', result: high },
+    { label: '低め', result: center },
+  ]
+}
 
 type Props = {
   songs: Song[]
   profile: VoiceProfile | null
-  alignMode: AlignMode
   onEdit: (song: Song) => void
   onDelete: (song: Song) => void
 }
 
 /** 曲の一覧（おすすめキー付き） */
-export function SongList({ songs, profile, alignMode, onEdit, onDelete }: Props) {
+export function SongList({ songs, profile, onEdit, onDelete }: Props) {
   const [query, setQuery] = useState('')
   const [order, setOrder] = useState<SongOrder>('newest')
 
@@ -62,8 +77,7 @@ export function SongList({ songs, profile, alignMode, onEdit, onDelete }: Props)
 
       <ul className="song-list">
         {shown.map((song) => {
-          const result = profile && calcKey(profile, song, alignMode)
-          const joysoundKey = result && formatJoysoundKey(result)
+          const options = profile && keyOptions(profile, song)
           return (
             <li key={song.id} className="song" aria-label={song.title}>
               <div className="song-head">
@@ -81,24 +95,30 @@ export function SongList({ songs, profile, alignMode, onEdit, onDelete }: Props)
                 </div>
               </div>
 
-              {result ? (
+              {options ? (
                 <>
-                  <div className="song-result">
-                    <span className={`status status-${result.status}`} data-testid="status">
-                      {STATUS_LABELS[result.status]}
-                    </span>
-                    <span className="song-key" data-testid="recommended-key">
-                      {formatKeyResult(result)}
-                    </span>
-                    {joysoundKey && (
-                      <span className="song-key-alt" data-testid="joysound-key">
-                        ±6: {joysoundKey}
-                      </span>
-                    )}
-                  </div>
+                  {options.map(({ label, result }) => {
+                    const joysoundKey = formatJoysoundKey(result)
+                    return (
+                      <div key={label} className="song-result">
+                        {options.length > 1 && <span className="key-label">{label}</span>}
+                        <span className="song-key" data-testid="recommended-key">
+                          {formatKeyResult(result)}
+                        </span>
+                        {joysoundKey && (
+                          <span className="song-key-alt" data-testid="joysound-key">
+                            ±6: {joysoundKey}
+                          </span>
+                        )}
+                        <span className={`status status-${result.status}`} data-testid="status">
+                          {STATUS_LABELS[result.status]}
+                        </span>
+                      </div>
+                    )
+                  })}
                   <details className="song-detail">
-                    <summary>{describeKeyResult(result)}</summary>
-                    <RangeBar profile={profile} song={song} result={result} />
+                    <summary>{options.length > 1 ? '音域の図' : describeKeyResult(options[0].result)}</summary>
+                    <RangeBar profile={profile} song={song} options={options} />
                   </details>
                 </>
               ) : (
