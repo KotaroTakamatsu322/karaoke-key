@@ -9,7 +9,7 @@ const floorToA = (n: number) => MIN_NOTE + 12 * Math.floor((n - MIN_NOTE) / 12)
 const ceilToA = (n: number) => MIN_NOTE + 12 * Math.ceil((n - MIN_NOTE) / 12)
 
 /** 音域の広さ（例: 「2オクターブと3半音」） */
-export function formatWidth(semitones: number): string {
+function formatWidth(semitones: number): string {
   const octaves = Math.floor(semitones / 12)
   const rest = semitones % 12
   if (octaves === 0) return `${rest}半音`
