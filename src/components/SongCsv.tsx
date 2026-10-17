@@ -45,7 +45,8 @@ export function SongCsv({ songs, onImport }: Props) {
     <details className="song-csv">
       <summary>CSVで取り込み・書き出し</summary>
       <p className="hint">
-        1行目は見出し（曲名,アーティスト,最低音,最高音,裏声の最高音）です。音名は mid2G でも G4 でも読めます。
+        1行目は見出し（曲名,アーティスト,最低音,最高音,裏声の最高音,十八番,女性曲）です。音名は mid2G でも G4 でも読めます。
+        十八番・女性曲の欄は、印を付けるなら ○ を入れます（列がなければ、今の印をそのまま残します）。
         曲名とアーティストが同じ曲は、CSV の内容で上書きします（歌った記録は残ります）。
       </p>
 

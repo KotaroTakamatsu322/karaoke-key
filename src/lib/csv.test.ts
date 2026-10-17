@@ -28,30 +28,53 @@ describe('parseCsv', () => {
 
 describe('songsToCsv / parseSongsCsv', () => {
   const songs = [
-    song('1', '喜劇', '星野源', 45, 71),
-    song('2', 'Hello, World', '"歌手" A', 50, 70, 76),
-    song('3', 'ray', 'BUMP OF CHICKEN', 47, 68),
+    { ...song('1', '喜劇', '星野源', 45, 71), favorite: true, female: false },
+    { ...song('2', 'Hello, World', '"歌手" A', 50, 70, 76), favorite: false, female: true },
+    { ...song('3', 'ray', 'BUMP OF CHICKEN', 47, 68), favorite: false, female: false },
   ]
 
   it('書き出した CSV をそのまま取り込み直すと、元と同じ曲の値になる（⑥ の完了の条件）', () => {
     const csv = songsToCsv(songs)
-    expect(csv.startsWith('﻿曲名,アーティスト,最低音,最高音,裏声の最高音\r\n')).toBe(true)
+    expect(csv.startsWith('﻿曲名,アーティスト,最低音,最高音,裏声の最高音,十八番,女性曲\r\n')).toBe(true)
 
     const { values, errors } = parseSongsCsv(csv)
     expect(errors).toEqual([])
-    const pick = ({ title, artist, low, high, falsettoHigh }: Song) => ({ title, artist, low, high, falsettoHigh })
+    const pick = ({ title, artist, low, high, falsettoHigh, favorite, female }: Song) => ({
+      title,
+      artist,
+      low,
+      high,
+      falsettoHigh,
+      favorite,
+      female,
+    })
     const byTitle = (a: { title: string }, b: { title: string }) => a.title.localeCompare(b.title)
     expect([...values].sort(byTitle)).toEqual(songs.map(pick).sort(byTitle))
   })
 
-  it('音名は日本式で書き出す', () => {
-    expect(songsToCsv([song('1', '曲', '', 45, 71, 76)])).toContain('曲,,mid1A,hiB,hiE')
+  it('音名は日本式、印は ○ で書き出す', () => {
+    expect(songsToCsv([song('1', '曲', '', 45, 71, 76)])).toContain('曲,,mid1A,hiB,hiE,,\r\n')
+    expect(songsToCsv([{ ...song('1', '曲', '', 45, 71), favorite: true, female: true }])).toContain(
+      '曲,,mid1A,hiB,,○,○\r\n',
+    )
   })
 
-  it('国際表記・英語の見出し・裏声の列なしでも読める', () => {
+  it('国際表記・英語の見出し・裏声と印の列なしでも読める（印はわからない＝undefined）', () => {
     const { values, errors } = parseSongsCsv('title,artist,low,high\n曲A,歌手A,C3,B4\n')
     expect(errors).toEqual([])
-    expect(values).toEqual([{ title: '曲A', artist: '歌手A', low: 48, high: 71, falsettoHigh: undefined }])
+    expect(values).toEqual([
+      { title: '曲A', artist: '歌手A', low: 48, high: 71, falsettoHigh: undefined, favorite: undefined, female: undefined },
+    ])
+  })
+
+  it('印の欄は ○・1・true・はい などで付き、空なら付かない', () => {
+    const { values } = parseSongsCsv(['曲A,,C3,B4,,○,', '曲B,,C3,B4,,1,TRUE', '曲C,,C3,B4,,はい,◯', '曲D,,C3,B4,,,'].join('\n'))
+    expect(values.map((v) => [v.favorite, v.female])).toEqual([
+      [true, false],
+      [true, true],
+      [true, true],
+      [false, false],
+    ])
   })
 
   it('読めない行は行番号つきのエラーにして、ほかの行は読む', () => {
@@ -107,6 +130,15 @@ describe('mergeSongs', () => {
     expect(r).toMatchObject({ added: 1, updated: 0 })
     expect(r.songs).toHaveLength(1)
     expect(r.songs[0].high).toBe(66)
+  })
+
+  it('印の列がない CSV で上書きしても、今の印は残る。列があれば CSV の値になる', () => {
+    const marked = [{ ...song('id-1', '曲A', '', 48, 71), favorite: true, female: true }]
+    const old = mergeSongs(marked, parseSongsCsv('曲A,,mid1C,hiA').values, now)
+    expect(old.songs[0]).toMatchObject({ high: 69, favorite: true, female: true })
+
+    const cleared = mergeSongs(marked, parseSongsCsv('曲A,,mid1C,hiA,,,○').values, now)
+    expect(cleared.songs[0]).toMatchObject({ favorite: false, female: true })
   })
 
   it('上書きで裏声の最高音を消せる', () => {

@@ -4,8 +4,11 @@ import { playNote } from '../lib/audio'
 import { formatNote, noteName } from '../lib/note'
 import { createRecord, formatDate, RATING_LABELS, songRecords, suggestShift } from '../lib/record'
 import {
+  applySongFilters,
   describeKeyResult,
   filterSongs,
+  SONG_FILTERS,
+  type SongFilter,
   formatJoysoundShift,
   formatShift,
   SONG_ORDERS,
@@ -47,12 +50,17 @@ type Props = {
 export function SongList({ songs, records, ...rest }: Props) {
   const [query, setQuery] = useState('')
   const [order, setOrder] = useState<SongOrder>('artist')
+  const [filters, setFilters] = useState<SongFilter[]>([])
 
   if (songs.length === 0) {
     return <p className="hint">まだ曲が登録されていません。</p>
   }
 
-  const shown = sortSongs(filterSongs(songs, query), order)
+  const shown = sortSongs(applySongFilters(filterSongs(songs, query), filters, rest.profile), order)
+  // 「原曲キーで歌える」は音域が登録されているときだけ出す
+  const filterChoices = SONG_FILTERS.filter((f) => f.value !== 'original' || rest.profile)
+  const toggleFilter = (f: SongFilter) =>
+    setFilters((now) => (now.includes(f) ? now.filter((x) => x !== f) : [...now, f]))
 
   return (
     <div>
@@ -79,7 +87,21 @@ export function SongList({ songs, records, ...rest }: Props) {
         </select>
       </div>
 
-      {shown.length === 0 && <p className="hint">「{query}」に当てはまる曲はありません。</p>}
+      <div className="filter-chips" role="group" aria-label="絞り込み">
+        {filterChoices.map((f) => (
+          <button
+            key={f.value}
+            type="button"
+            className="chip"
+            aria-pressed={filters.includes(f.value)}
+            onClick={() => toggleFilter(f.value)}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {shown.length === 0 && <p className="hint">当てはまる曲はありません。</p>}
 
       <ul className="song-list">
         {shown.map((song) => (
@@ -103,8 +125,20 @@ function SongCard({ song, profile, records, onEdit, onDelete, onAddRecord, onDel
     <li className="song" aria-label={song.title}>
       <div className="song-head">
         <div className="song-main">
-          <div className="song-title">{song.title}</div>
-          {song.artist && <div className="song-artist">{song.artist}</div>}
+          <div className="song-title">
+            {song.favorite && (
+              <span className="favorite-mark" title="十八番" aria-label="十八番">
+                ★
+              </span>
+            )}
+            {song.title}
+          </div>
+          {(song.artist || song.female) && (
+            <div className="song-artist">
+              {song.artist}
+              {song.female && <span className="tag">女性曲</span>}
+            </div>
+          )}
         </div>
         <div className="song-actions">
           <button type="button" className="small" onClick={() => onEdit(song)}>

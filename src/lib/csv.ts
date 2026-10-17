@@ -3,8 +3,17 @@ import type { Song } from '../types'
 import { parseNote, toJapanese } from './note'
 import { createSong, normalize, sortSongs, updateSong, validateSong, type SongValues } from './song'
 
-const HEADER = ['曲名', 'アーティスト', '最低音', '最高音', '裏声の最高音']
+const HEADER = ['曲名', 'アーティスト', '最低音', '最高音', '裏声の最高音', '十八番', '女性曲']
 const BOM = '﻿'
+const MARK = '○'
+const MARK_VALUES = ['○', '◯', '〇', '●', '★', '1', 'true', 'yes', 'y', 'はい']
+
+/** 印の欄を読む。列がなければ undefined（わからない）、空なら false */
+function readMark(cell: string | undefined): boolean | undefined {
+  if (cell === undefined) return undefined
+  const v = normalize(cell)
+  return v !== '' && MARK_VALUES.includes(v)
+}
 
 /** CSV を行と欄に分ける（"…" で囲んだ欄の中のカンマ・改行・"" に対応。BOM・CRLF を許す） */
 export function parseCsv(text: string): string[][] {
@@ -57,6 +66,8 @@ export function songsToCsv(songs: Song[]): string {
     toJapanese(s.low),
     toJapanese(s.high),
     s.falsettoHigh === undefined ? '' : toJapanese(s.falsettoHigh),
+    s.favorite ? MARK : '',
+    s.female ? MARK : '',
   ])]
   return BOM + lines.map((cells) => cells.map(escapeField).join(',')).join('\r\n') + '\r\n'
 }
@@ -91,6 +102,8 @@ export function parseSongsCsv(text: string): { values: SongValues[]; errors: Csv
       low: note('最低音', low),
       high: note('最高音', high),
       falsettoHigh: note('裏声の最高音', falsettoHigh),
+      favorite: readMark(cells[5]),
+      female: readMark(cells[6]),
     }
     if (readErrors.length > 0) {
       errors.push({ line, message: readErrors.join('、') })

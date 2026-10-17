@@ -20,6 +20,8 @@ export function SongForm({ song, artists, onSubmit, onCancel }: Props) {
     low: song?.low,
     high: song?.high,
     falsettoHigh: song?.falsettoHigh,
+    favorite: song?.favorite ?? false,
+    female: song?.female ?? false,
   }))
   const [errors, setErrors] = useState<string[]>([])
   const prefix = song ? 'edit' : 'new'
@@ -33,7 +35,9 @@ export function SongForm({ song, artists, onSubmit, onCancel }: Props) {
     }
     setErrors([])
     onSubmit(result.values)
-    if (!song) setDraft({ title: '', artist: '', low: undefined, high: undefined, falsettoHigh: undefined })
+    if (!song) {
+      setDraft({ title: '', artist: '', low: undefined, high: undefined, falsettoHigh: undefined, favorite: false, female: false })
+    }
   }
 
   return (
@@ -88,6 +92,24 @@ export function SongForm({ song, artists, onSubmit, onCancel }: Props) {
             onChange={(falsettoHigh) => setDraft((d) => ({ ...d, falsettoHigh }))}
             placeholder="なし"
           />
+        </div>
+        <div className="check-row">
+          <label>
+            <input
+              type="checkbox"
+              checked={draft.favorite ?? false}
+              onChange={(e) => setDraft((d) => ({ ...d, favorite: e.target.checked }))}
+            />
+            ★ 十八番
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={draft.female ?? false}
+              onChange={(e) => setDraft((d) => ({ ...d, female: e.target.checked }))}
+            />
+            女性曲
+          </label>
         </div>
 
         {errors.length > 0 && (

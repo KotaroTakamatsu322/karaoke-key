@@ -15,6 +15,8 @@ export type Song = {
   low: number
   high: number
   falsettoHigh?: number
+  favorite?: boolean // ★十八番
+  female?: boolean // 女性曲（キーの計算には使わず、目印と絞り込みに使う）
   memo?: string
   createdAt: string
   updatedAt: string

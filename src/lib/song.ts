@@ -1,6 +1,6 @@
 // 曲の入力チェック・検索・並べ替え・おすすめキーの表示
-import type { KeyResult, KeyStatus, Song } from '../types'
-import { JOYSOUND_KEY_LIMIT, MACHINE_KEY_LIMIT, toMachineKey } from './key'
+import type { KeyResult, KeyStatus, Song, VoiceProfile } from '../types'
+import { calcKey, JOYSOUND_KEY_LIMIT, MACHINE_KEY_LIMIT, toMachineKey } from './key'
 
 export type SongDraft = {
   title: string
@@ -8,10 +8,13 @@ export type SongDraft = {
   low?: number
   high?: number
   falsettoHigh?: number
+  favorite?: boolean
+  female?: boolean
 }
 
-// falsettoHigh は編集で消せるように、未入力でも undefined として持つ
-export type SongValues = Pick<Song, 'title' | 'artist' | 'low' | 'high' | 'falsettoHigh'>
+// falsettoHigh は編集で消せるように、未入力でも undefined として持つ。
+// 印（favorite・female）は undefined なら「わからない」として、上書きのときに元の値を残す（印の列がない CSV のため）
+export type SongValues = Pick<Song, 'title' | 'artist' | 'low' | 'high' | 'falsettoHigh' | 'favorite' | 'female'>
 
 /** 入力に問題がなければ曲の値を、あればエラーメッセージの一覧を返す */
 export function validateSong(
@@ -31,7 +34,18 @@ export function validateSong(
   if (errors.length > 0 || d.low === undefined || d.high === undefined) {
     return { ok: false, errors }
   }
-  return { ok: true, values: { title, artist, low: d.low, high: d.high, falsettoHigh: d.falsettoHigh } }
+  return {
+    ok: true,
+    values: {
+      title,
+      artist,
+      low: d.low,
+      high: d.high,
+      falsettoHigh: d.falsettoHigh,
+      favorite: d.favorite,
+      female: d.female,
+    },
+  }
 }
 
 /** 重ならない ID を作る（crypto.randomUUID は http のスマホ確認では使えないため予備を用意する） */
@@ -49,8 +63,36 @@ export function createSong(values: SongValues, now = new Date()): Song {
 }
 
 export function updateSong(song: Song, values: SongValues, now = new Date()): Song {
-  // 裏声の最高音は、値に入っていなければ消す（編集や CSV で消せるように）
-  return { ...song, ...values, falsettoHigh: values.falsettoHigh, updatedAt: now.toISOString() }
+  return {
+    ...song,
+    ...values,
+    // 裏声の最高音は、値に入っていなければ消す（編集や CSV で消せるように）
+    falsettoHigh: values.falsettoHigh,
+    // 印は、わからない（undefined）なら元の値を残す
+    favorite: values.favorite ?? song.favorite,
+    female: values.female ?? song.female,
+    updatedAt: now.toISOString(),
+  }
+}
+
+export type SongFilter = 'favorite' | 'female' | 'original'
+
+export const SONG_FILTERS: { value: SongFilter; label: string }[] = [
+  { value: 'favorite', label: '★十八番' },
+  { value: 'female', label: '女性曲' },
+  { value: 'original', label: '原曲キーで歌える' },
+]
+
+/** 印と「原曲キーで歌える」で絞り込む（複数選んだら、全部に当てはまる曲） */
+export function applySongFilters(songs: Song[], filters: SongFilter[], profile: VoiceProfile | null): Song[] {
+  return songs.filter((s) =>
+    filters.every((f) => {
+      if (f === 'favorite') return s.favorite === true
+      if (f === 'female') return s.female === true
+      // 原曲キーで歌えるかは、合わせ方によらず同じ
+      return profile !== null && calcKey(profile, s, 'high').status === 'original'
+    }),
+  )
 }
 
 /** 曲名とアーティストで絞り込む（大文字・小文字、全角・半角は区別しない） */

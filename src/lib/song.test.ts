@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { KeyResult, Song } from '../types'
 import { calcKey } from './key'
 import {
+  applySongFilters,
   artistNames,
   createSong,
   describeKeyResult,
@@ -105,6 +106,38 @@ describe('sortSongs', () => {
   it('元の配列は変えない', () => {
     sortSongs(songs, 'title')
     expect(songs[0].title).toBe('さくら')
+  })
+})
+
+describe('印（十八番・女性曲）', () => {
+  it('編集で印を付け外しでき、わからない（undefined）なら元の印を残す', () => {
+    const s = { ...song('曲A', '', '1'), favorite: true, female: false }
+    const base = { title: '曲A', artist: '', low: 48, high: 64 }
+    expect(updateSong(s, { ...base, favorite: false, female: true })).toMatchObject({ favorite: false, female: true })
+    expect(updateSong(s, base)).toMatchObject({ favorite: true, female: false })
+  })
+})
+
+describe('applySongFilters', () => {
+  const me = { low: 43, high: 67 }
+  const songs = [
+    { ...song('十八番', '', '1'), favorite: true }, // 48〜64 は原曲キーで歌える
+    { ...song('女性曲', '', '2'), female: true, low: 55, high: 76 },
+    { ...song('両方', '', '3'), favorite: true, female: true, low: 55, high: 76 },
+  ]
+  const titles = (filters: Parameters<typeof applySongFilters>[1]) =>
+    applySongFilters(songs, filters, me).map((s) => s.title)
+
+  it('選んだ印が全部付いている曲だけにする', () => {
+    expect(titles([])).toEqual(['十八番', '女性曲', '両方'])
+    expect(titles(['favorite'])).toEqual(['十八番', '両方'])
+    expect(titles(['female'])).toEqual(['女性曲', '両方'])
+    expect(titles(['favorite', 'female'])).toEqual(['両方'])
+  })
+
+  it('原曲キーで歌える曲だけにする（音域が未登録なら0曲）', () => {
+    expect(titles(['original'])).toEqual(['十八番'])
+    expect(applySongFilters(songs, ['original'], null)).toEqual([])
   })
 })
 

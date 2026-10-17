@@ -331,6 +331,66 @@ describe('歌った記録（⑤）', () => {
   })
 })
 
+describe('印と絞り込み（⑦）', () => {
+  beforeEach(() => {
+    // 自分 lowG(43)〜mid2G(67)。曲A は原曲キーで歌える、曲B は高い
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        profile: { low: 43, high: 67 },
+        songs: [
+          { id: 'a', title: '曲A', artist: '歌手A', low: 48, high: 64, createdAt: '1', updatedAt: '1' },
+          { id: 'b', title: '曲B', artist: '歌手B', low: 55, high: 76, createdAt: '2', updatedAt: '2' },
+        ],
+      }),
+    )
+  })
+
+  const shownTitles = () => screen.getAllByRole('listitem', { name: /^曲/ }).map((li) => li.getAttribute('aria-label'))
+  const chip = (name: string) => within(screen.getByRole('group', { name: '絞り込み' })).getByRole('button', { name })
+
+  it('編集で印を付けると ★ とラベルが出て、絞り込みで曲がしぼられる', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    render(<App />)
+
+    // 曲B に ★十八番・女性曲 を付ける
+    await user.click(within(screen.getByRole('listitem', { name: '曲B' })).getByRole('button', { name: '編集' }))
+    await user.click(screen.getByLabelText('★ 十八番'))
+    await user.click(screen.getByLabelText('女性曲'))
+    await user.click(screen.getByRole('button', { name: '変更を保存' }))
+
+    const itemB = within(screen.getByRole('listitem', { name: '曲B' }))
+    expect(itemB.getByLabelText('十八番')).toBeTruthy()
+    expect(itemB.getByText('女性曲')).toBeTruthy()
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).songs[1]).toMatchObject({ favorite: true, female: true })
+
+    // 絞り込み
+    expect(shownTitles()).toEqual(['曲A', '曲B'])
+    await user.click(chip('★十八番'))
+    expect(chip('★十八番').getAttribute('aria-pressed')).toBe('true')
+    expect(shownTitles()).toEqual(['曲B'])
+    await user.click(chip('原曲キーで歌える')) // 十八番 かつ 原曲キー → なし
+    expect(screen.queryAllByRole('listitem', { name: /^曲/ })).toHaveLength(0)
+    expect(screen.getByText('当てはまる曲はありません。')).toBeTruthy()
+    await user.click(chip('★十八番'))
+    expect(shownTitles()).toEqual(['曲A'])
+  })
+
+  it('音域が未登録なら「原曲キーで歌える」は出さない', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ songs: [{ id: 'a', title: '曲A', artist: '', low: 48, high: 64, createdAt: '1', updatedAt: '1' }] }),
+    )
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: '曲' }))
+    const group = within(screen.getByRole('group', { name: '絞り込み' }))
+    expect(group.queryByRole('button', { name: '原曲キーで歌える' })).toBeNull()
+    expect(group.getByRole('button', { name: '★十八番' })).toBeTruthy()
+  })
+})
+
 describe('CSV の取り込み（⑥）', () => {
   it('ファイルを選ぶと曲が増え、同じ曲は上書きされ、読めない行が出る', async () => {
     localStorage.setItem(
