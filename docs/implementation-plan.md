@@ -147,7 +147,7 @@ localStorage のキーは `karaoke-key:v1` にまとめ、`{ version, profile, s
 テスト（`*.test.ts`）は、調べるファイルの横に置く。
 
 ```
-my-app/
+karaoke-key/
   docs/implementation-plan.md   ← この文書
   .github/workflows/deploy.yml  master に push すると、テスト・ビルドをして GitHub Pages に公開する
   index.html                    アプリ名・アイコン・manifest の読み込み
